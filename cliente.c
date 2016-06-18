@@ -72,11 +72,13 @@ int main(int argc, char **argv){
         
     }
     
-    char separador = ':';
-    char *mensaje = malloc(strlen(accion)+strlen(identificador)+2);
+    char *separador = (char *)malloc(sizeof(char));
+    *separador = ':';
+    char *mensaje = malloc(strlen(accion)+strlen(identificador)+3);
     strncat(mensaje, accion, strlen(accion));
+    strncat(mensaje, separador, strlen(separador));
     strncat(mensaje, identificador, strlen(identificador));
-    strncat(mensaje, &separador, strlen(identificador));
+    strncat(mensaje, separador, strlen(separador));
     
     struct addrinfo infoDir;
     memset(&infoDir, 0, sizeof(infoDir));

@@ -1,5 +1,5 @@
 struct nodo {
-    int identificador;
+    char *identificador;
 };
 
 struct conj {
@@ -7,8 +7,8 @@ struct conj {
     struct conj *siguiente;
 };
 
-void inicializarConj(struct conj *conjunto, int identificador);
-void insertarEnConj(struct conj *conjunto, int identificador);
+void inicializarConj(struct conj *conjunto, char *identificador);
+int insertarEnConj(struct conj *conjunto, char *identificador);
 void liberarConj(struct conj *conjunto);
-int eliminarEnConj(struct conj **conjunto, int identificador);
+int eliminarEnConj(struct conj **conjunto, char *identificador);
 void imprimirConj(struct conj *conjunto);

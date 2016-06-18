@@ -11,7 +11,7 @@
 
 
 struct nodo {
-    int identificador;
+    char *identificador;
 };
 
 struct conj {
@@ -19,21 +19,22 @@ struct conj {
     struct conj *siguiente;
 };
 
-void inicializarConj(struct conj *conjunto, int identificador){
+void inicializarConj(struct conj *conjunto, char *identificador){
     conjunto->siguiente = NULL;
     struct nodo *nuevoNodo = (struct nodo *)malloc(sizeof(struct nodo));
     nuevoNodo->identificador = identificador;
     conjunto->elemento = nuevoNodo;
 }
 
-int insertarEnConj(struct conj *conjunto, int identificador){
+int insertarEnConj(struct conj *conjunto, char *identificador){
     struct conj *conjActual = conjunto;
     struct conj *conjAnterior = NULL;
     int encontrado = 0;
     while (conjActual){
         if (conjActual->elemento){
-            if (conjActual->elemento->identificador == identificador){
+            if (strcmp(conjActual->elemento->identificador, identificador)==1){
                 encontrado = 1;
+                break;
             }
         }
         conjAnterior = conjActual;
@@ -65,7 +66,7 @@ void liberarConj(struct conj *conjunto){
 }
 
 
-int eliminarEnConj(struct conj **conjunto, int identificador){
+int eliminarEnConj(struct conj **conjunto, char *identificador){
     struct conj *conjActual = *conjunto;
     struct conj *conjAnterior = NULL;
     struct conj *aux = *conjunto;
@@ -76,8 +77,8 @@ int eliminarEnConj(struct conj **conjunto, int identificador){
         conjAnterior = conjActual;
         conjActual = conjActual->siguiente;
         if (conjAnterior->elemento){
-            printf("ElementoEl: %d\n", conjAnterior->elemento->identificador);
-            if (conjAnterior->elemento->identificador == identificador){
+            printf("ElementoEl: %s\n", conjAnterior->elemento->identificador);
+            if (strcmp(conjAnterior->elemento->identificador, identificador)==1){
                 
                 if(numero==1){
                     *conjunto = conjActual;
@@ -88,6 +89,7 @@ int eliminarEnConj(struct conj **conjunto, int identificador){
                 }
                 
                 free(conjAnterior->elemento);
+                free(conjAnterior->elemento->identificador);
                 free(conjAnterior);
                 if (conjActual){
                     aux->siguiente = conjActual;
@@ -106,7 +108,7 @@ int eliminarEnConj(struct conj **conjunto, int identificador){
             aux = aux->siguiente;
         }
         numero++;
-        printf("aux: %d\n", aux->elemento->identificador);
+        printf("aux: %s\n", aux->elemento->identificador);
     }
     
     return liberado;
@@ -119,7 +121,7 @@ void imprimirConj(struct conj *conjunto){
         conjAnterior = conjActual;
         conjActual = conjActual->siguiente;
         if (conjAnterior->elemento){
-            printf("Elemento %d\n", conjAnterior->elemento->identificador);
+            printf("Elemento %s\n", conjAnterior->elemento->identificador);
         }
     }
 }
@@ -127,12 +129,19 @@ void imprimirConj(struct conj *conjunto){
 /*
 int main(int argc, char **argv){
     struct conj *carros = (struct conj *)malloc(sizeof(struct conj));
-    int carroID = 1;
-    inicializarConj(carros, carroID);
-    insertarEnConj(carros, 2);
-    insertarEnConj(carros, 3);
-    insertarEnConj(carros, 4);
-    if (eliminarEnConj(&carros, 1)){
+    char *carroID1 = malloc(sizeof(char));
+    char *carroID2 = malloc(sizeof(char));
+    char *carroID3 = malloc(sizeof(char));
+    char *carroID4 = malloc(sizeof(char));
+    *carroID1 = '1';
+    *carroID2 = '2';
+    *carroID3 = '3';
+    *carroID4 = '4';
+    inicializarConj(carros, carroID1);
+    insertarEnConj(carros, carroID2);
+    insertarEnConj(carros, carroID3);
+    insertarEnConj(carros, carroID4);
+    if (eliminarEnConj(&carros, '1')){
         printf("Liberado\n");
     }else{
         printf("No Liberado\n");

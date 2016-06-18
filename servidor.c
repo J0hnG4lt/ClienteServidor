@@ -34,7 +34,9 @@ int main(int argc, char **argv){
     char *bitacoraEntrada=NULL;
     char *bitacoraSalida=NULL;
     char *puerto=NULL;
-    char *solicitudParsed;
+    char *solicitudParsed = (char *)calloc(LON_MAX_MENSAJE, 1);
+    char *accion = NULL;
+    char *identificador = NULL;
     int opcn;
     while ((opcn = getopt(argc,argv, "l:i:o:")) != -1){
         switch(opcn){
@@ -129,30 +131,43 @@ int main(int argc, char **argv){
         }
         
         solicitud[strlen(solicitud)] = '\0';
-        solicitudParsed = strtok(solicitud, &separador);
+        accion = strtok(solicitud, &separador);
+        identificador = strtok(NULL, &separador);
+        printf("136 accion: %s\n", accion);
+        printf("137 Identificador: %s\n", identificador);
+        strncpy(solicitudParsed, accion, strlen(accion));
+        strncat(solicitudParsed, identificador, strlen(identificador));
         printf("Solicitud: %s\n", solicitudParsed);
         
         if (solicitud[0]=='e'){
-            if (numPuestosOcupados < NUM_MAX_PUESTOS){
+            
+            if(carros == NULL){
+                carros = (struct conj *)malloc(sizeof(struct conj));
+                inicializarConj(carros, identificador);
+                printf("Carro inicializado\n");
                 numPuestosOcupados++;
-                solicitud[0] = 's';
+                solicitudParsed[0] = 's';
+                
+            } else if ((numPuestosOcupados < NUM_MAX_PUESTOS) && (insertarEnConj(carros, identificador) == 0)){
+                numPuestosOcupados++;
+                solicitudParsed[0] = 's';
             }
             else{
-                solicitud[0] = 'n';
+                solicitudParsed[0] = 'n';
             }
-        } else if (solicitud[0] == 's'){
+        } else if (solicitudParsed[0] == 's'){
             if (numPuestosOcupados > 0){
                 numPuestosOcupados--;
-                solicitud[0] = 's';
+                solicitudParsed[0] = 's';
             }
             else{
-                solicitud[0] = 'n';
+                solicitudParsed[0] = 'n';
             }
         }
         printf("Puestos Ocupados: %d\n", numPuestosOcupados);
         
         ssize_t numBytesEnviados = sendto(socketSrvdrClt, 
-                                        solicitud, 
+                                        solicitudParsed, 
                                         numBytesRecibidos,
                                         0,
                                         (struct sockaddr *) &dirClnt, 
@@ -165,8 +180,12 @@ int main(int argc, char **argv){
             fprintf(stderr," No se envió el número correcto de bytes.\n");
         }
         
+        free(solicitudParsed);
+        solicitudParsed = (char *)calloc(LON_MAX_MENSAJE, 1);
+        
     }
     
+    free(solicitudParsed);
     
     return 0;
 }
