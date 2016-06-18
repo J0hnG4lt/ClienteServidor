@@ -156,7 +156,7 @@ int main(int argc, char **argv){
                 printf("No Insertado\n");
             }
         } else if (solicitudParsed[0] == 's'){
-            if ((numPuestosOcupados > 0) && (eliminarEnConj(&carros, identificador)==0)){
+            if ((numPuestosOcupados > 0) && (eliminarEnConj(&carros, identificador)==1)){
                 numPuestosOcupados--;
                 solicitudParsed[0] = 's';
             }
