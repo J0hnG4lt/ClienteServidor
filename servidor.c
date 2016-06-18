@@ -7,6 +7,8 @@
 #include <netdb.h>
 #include <errno.h>
 
+
+#define LON_MAX_STRNG 50
 #define LON_MAX_DIR 50
 #define LON_MAX_ID 50
 #define NUM_INTENTOS 3
@@ -14,74 +16,53 @@
 
 int main(int argc, char **argv){
     
-    if (argc != 9){
+    if (argc != 7){
         fprintf(stderr,"Número incorrecto de argumentos.\nUso correcto:\n");
-        fprintf(stderr,"\tsem_cli -d <dirección IP o nombre de dominio>\n \t\t-p <puerto>\n \t\t-c <acción>\n \t\t-i <identificador de vehículo>\n");
+        fprintf(stderr,"\tsem_svr -l <puerto a servir>\n \t\t-i <bitácora de entrada>\n \t\t-o <bitácora de salida>\n");
         abort();
     }
     
-    char *direccion=NULL;
+    char *bitacoraEntrada=NULL;
+    char *bitacoraSalida=NULL;
     char *puerto=NULL;
-    char *accion=NULL;
-    char *identificador=NULL;
     
     int opcn;
-    while ((opcn = getopt(argc,argv, "d:p:c:i:")) != -1){
+    while ((opcn = getopt(argc,argv, "l:i:o:")) != -1){
         switch(opcn){
-            case 'd':
-                if (LON_MAX_DIR < strlen(optarg)){
-                    fprintf(stderr,"Longitud máxima de dirección sobrepasada.\n");
-                    free(accion);
+            case 'i':
+                if (LON_MAX_STRNG < strlen(optarg)){
+                    fprintf(stderr,"Bitácora de Entrada: Longitud máxima de nombre sobrepasada.\n");
+                    free(bitacoraSalida);
                     free(puerto);
-                    free(identificador);
                     abort();
                 }
-                direccion = strdup(optarg);
+                bitacoraEntrada = strdup(optarg);
                 break;
-             case 'p':
+             case 'l':
                 if (strlen(optarg) != 4){
                     fprintf(stderr,"Número de puerto de tamaño equivocado.\n");
-                    free(accion);
-                    free(direccion);
-                    free(identificador);
+                    free(bitacoraEntrada);
+                    free(bitacoraSalida);
                     abort();
                 } else if (!atoi(optarg)){
                     fprintf(stderr,"El puerto ha de ser un número.\n");
-                    free(accion);
-                    free(direccion);
-                    free(identificador);
+                    free(bitacoraEntrada);
+                    free(bitacoraSalida);
                     abort();
                 }
                 
                 puerto = strdup(optarg);
                 break;
-             case 'c':
-                if ((*optarg != 'e') && (*optarg != 's')){
-                    fprintf(stderr,"Tipo de acción equivocada. Debe ser 'e' para entrada o 's' para salida\n");
-                    free(direccion);
-                    free(identificador);
-                    free(puerto);
-                    abort();
-                }
-                accion = strdup(optarg);
-                break;
-             case 'i':
-                if (strlen(optarg) > LON_MAX_ID){
-                    fprintf(stderr,"Longitud máxima de identificador sobrepasada.\n");
-                    free(accion);
-                    free(direccion);
-                    free(puerto);
-                    abort();
-                } else if (!atoi(optarg)){
-                    fprintf(stderr,"El identificador ha de ser un número.\n");
-                    free(accion);
-                    free(direccion);
-                    free(puerto);
-                    abort();
-                }
-                identificador = strdup(optarg);
-                break;
-             
+             case 'o':
+                 if (LON_MAX_STRNG < strlen(optarg)){
+                     fprintf(stderr,"Bitácora de Salida: Longitud máxima de nombre sobrepasada.\n");
+                     free(bitacoraEntrada);
+                     free(puerto);
+                     abort();
+                 }
+                 bitacoraSalida = strdup(optarg);
+                 break;
+                
              default:
                 abort();
         
@@ -89,41 +70,86 @@ int main(int argc, char **argv){
         
     }
     
+    printf("Puerto:%s, In:%s, Out:%s\n",puerto,bitacoraEntrada, bitacoraSalida);
     
+    /*
     char *mensaje = malloc(strlen(accion)+strlen(identificador)+1);
     strncat(mensaje, accion, strlen(accion));
     strncat(mensaje, identificador, strlen(identificador));
-    
+    */
     
     struct addrinfo infoDir;
     memset(&infoDir, 0, sizeof(infoDir));
     infoDir.ai_family = AF_UNSPEC;
     infoDir.ai_socktype = SOCK_DGRAM;
     infoDir.ai_protocol = IPPROTO_UDP;
+    infoDir.ai_flags = AI_PASSIVE;
+
     
     struct addrinfo *dirServ;
     int codigoErr;
-    if ((codigoErr =getaddrinfo(direccion, puerto, &infoDir, &dirServ)) != 0){
+    if ((codigoErr = getaddrinfo(NULL, puerto, &infoDir, &dirServ)) != 0){
         fprintf(stderr," Problema al obtener información sobre el servidor.\n");
+        free(bitacoraSalida);
+        free(bitacoraEntrada);
         free(puerto);
-        free(identificador);
-        free(accion);
-        free(direccion);
         gai_strerror(codigoErr);
         abort();
     }
     
-    int socketCltSrvdr = socket(dirServ->ai_family, dirServ->ai_socktype, dirServ->ai_protocol);
-    if (!socketCltSrvdr){
+    int socketSrvdrClt = socket(dirServ->ai_family, dirServ->ai_socktype, dirServ->ai_protocol);
+    if (!socketSrvdrClt){
         fprintf(stderr," Problema al crear el socket.\n");
+        free(bitacoraSalida);
+        free(bitacoraEntrada);
         free(puerto);
-        free(identificador);
-        free(accion);
-        free(direccion);
         abort();
     }
     
     
+    if (bind(socketSrvdrClt, dirServ->ai_addr, dirServ->ai_addrlen) != 0){
+        fprintf(stderr,"No se pudo enlazar el socket.\n");
+        free(bitacoraSalida);
+        free(bitacoraEntrada);
+        free(puerto);
+        abort();
+    }
+    
+    
+    freeaddrinfo(dirServ);
+    
+    
+    
+    while(1){
+        
+        struct sockaddr_storage dirClnt;
+        char solicitud[LON_MAX_MENSAJE+1];
+        socklen_t tamanoSocket = sizeof(dirClnt);
+        ssize_t numBytesRecibidos = recvfrom(socketSrvdrClt, 
+                                        solicitud, 
+                                        LON_MAX_MENSAJE,
+                                        0,
+                                        (struct sockaddr *) &dirClnt, 
+                                        &tamanoSocket);
+        
+        if (!numBytesRecibidos){
+            fprintf(stderr,"Error al recibir solicitud.\n");
+            free(bitacoraSalida);
+            free(bitacoraEntrada);
+            free(puerto);
+            abort();
+        }
+        
+        solicitud[strlen(solicitud)] = '\0';
+        printf("Solicitud: %s\n", solicitud);
+        
+        if (solicitud[0]=='s'){
+            break;
+        }
+        
+    }
+    
+    /*
     ssize_t numBytesEnviados=-1;
     int i=0;
     while((i < NUM_INTENTOS) && (numBytesEnviados==-1)){
@@ -131,7 +157,7 @@ int main(int argc, char **argv){
         i++;
     }
     
-    if (!socketCltSrvdr){
+    if (!socketSrvdrClt){
         fprintf(stderr," Problema al enviar información.\n");
         free(puerto);
         free(identificador);
@@ -183,12 +209,12 @@ int main(int argc, char **argv){
     printf("Mensaje: %s\n", mensaje);
     
     free(mensaje);
+    */
     
-    printf("ID:%s, Puerto:%s, Accion:%s, Direccion:%s\n", identificador, puerto, accion, direccion);
-    free(direccion);
-    free(accion);
+    
+    free(bitacoraEntrada);
+    free(bitacoraSalida);
     free(puerto);
-    free(identificador);
     
     return 0;
 }
