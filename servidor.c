@@ -6,7 +6,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <errno.h>
-
+#include "conjunto.h"
 
 #define LON_MAX_STRNG 50
 #define LON_MAX_DIR 50
@@ -14,10 +14,16 @@
 #define NUM_INTENTOS 3
 #define LON_MAX_MENSAJE 50
 #define NUM_MAX_PUESTOS 30
+#define TAM_MAX_ID 1000
+
+
+
 
 int main(int argc, char **argv){
     
     int numPuestosOcupados = 0;
+    struct conj *carros = NULL;
+    char separador = ':';
     
     if (argc != 7){
         fprintf(stderr,"Número incorrecto de argumentos.\nUso correcto:\n");
@@ -28,7 +34,7 @@ int main(int argc, char **argv){
     char *bitacoraEntrada=NULL;
     char *bitacoraSalida=NULL;
     char *puerto=NULL;
-    
+    char *solicitudParsed;
     int opcn;
     while ((opcn = getopt(argc,argv, "l:i:o:")) != -1){
         switch(opcn){
@@ -123,7 +129,8 @@ int main(int argc, char **argv){
         }
         
         solicitud[strlen(solicitud)] = '\0';
-        printf("Solicitud: %s\n", solicitud);
+        solicitudParsed = strtok(solicitud, &separador);
+        printf("Solicitud: %s\n", solicitudParsed);
         
         if (solicitud[0]=='e'){
             if (numPuestosOcupados < NUM_MAX_PUESTOS){
@@ -159,69 +166,6 @@ int main(int argc, char **argv){
         }
         
     }
-    
-    /*
-    ssize_t numBytesEnviados=-1;
-    int i=0;
-    while((i < NUM_INTENTOS) && (numBytesEnviados==-1)){
-        numBytesEnviados = sendto(socketCltSrvdr, mensaje, (size_t)strlen(mensaje), 0, dirServ->ai_addr, dirServ->ai_addrlen);
-        i++;
-    }
-    
-    if (!socketSrvdrClt){
-        fprintf(stderr," Problema al enviar información.\n");
-        free(puerto);
-        free(identificador);
-        free(accion);
-        free(direccion);
-        abort();
-    } else if (numBytesEnviados != (size_t)strlen(mensaje)) {
-        fprintf(stderr," No se envió el número correcto de bytes.\n");
-        free(puerto);
-        free(identificador);
-        free(accion);
-        free(direccion);
-        abort();
-    }
-    
-    
-    struct sockaddr_storage dirOrigenServ;
-    char mensajeRecibido[LON_MAX_MENSAJE + 1];
-    socklen_t tamanoSocket = sizeof(dirOrigenServ);
-    ssize_t numBytesRecibidos = recvfrom(socketCltSrvdr, mensajeRecibido, 
-                                    LON_MAX_MENSAJE, 0,
-                                    (struct sockaddr *) &dirOrigenServ, 
-                                    &tamanoSocket);
-    
-    
-    if (!numBytesRecibidos ){
-        fprintf(stderr," No se recibió ningún mensaje.\n");
-        free(puerto);
-        free(identificador);
-        free(accion);
-        free(direccion);
-        abort();
-    } else if (numBytesRecibidos != numBytesEnviados) {
-        fprintf(stderr," No se recibió el número correcto de bytes.\n");
-        free(puerto);
-        free(identificador);
-        free(accion);
-        free(direccion);
-        abort();
-    }
-    
-    mensajeRecibido[strlen(mensaje)] = '\0';
-    printf("Mensaje Recibido %s\n", mensajeRecibido);
-    
-    freeaddrinfo(dirServ);
-    
-    close(socketCltSrvdr);
-    
-    printf("Mensaje: %s\n", mensaje);
-    
-    free(mensaje);
-    */
-    
     
     
     return 0;

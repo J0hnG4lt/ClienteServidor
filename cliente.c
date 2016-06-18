@@ -11,6 +11,7 @@
 #define LON_MAX_ID 50
 #define NUM_INTENTOS 3
 #define LON_MAX_MENSAJE 50
+#define TAM_MAX_ID 1000
 
 int main(int argc, char **argv){
     
@@ -71,11 +72,11 @@ int main(int argc, char **argv){
         
     }
     
-    
-    char *mensaje = malloc(strlen(accion)+strlen(identificador)+1);
+    char separador = ':';
+    char *mensaje = malloc(strlen(accion)+strlen(identificador)+2);
     strncat(mensaje, accion, strlen(accion));
     strncat(mensaje, identificador, strlen(identificador));
-    
+    strncat(mensaje, &separador, strlen(identificador));
     
     struct addrinfo infoDir;
     memset(&infoDir, 0, sizeof(infoDir));
