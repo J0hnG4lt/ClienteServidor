@@ -131,16 +131,14 @@ int main(int argc, char **argv){
         }
         
         solicitud[strlen(solicitud)] = '\0';
-        accion = strtok(solicitud, &separador);
-        identificador = strtok(NULL, &separador);
-        printf("136 accion: %s\n", accion);
-        printf("137 Identificador: %s\n", identificador);
+        accion = strdup(strtok(solicitud, &separador));
+        identificador = strdup(strtok(NULL, &separador));
         strncpy(solicitudParsed, accion, strlen(accion));
         strncat(solicitudParsed, identificador, strlen(identificador));
         printf("Solicitud: %s\n", solicitudParsed);
         
-        if (solicitud[0]=='e'){
-            
+        if (solicitudParsed[0]=='e'){
+            printf("Entrada\n");
             if(carros == NULL){
                 carros = (struct conj *)malloc(sizeof(struct conj));
                 inicializarConj(carros, identificador);
@@ -151,12 +149,14 @@ int main(int argc, char **argv){
             } else if ((numPuestosOcupados < NUM_MAX_PUESTOS) && (insertarEnConj(carros, identificador) == 0)){
                 numPuestosOcupados++;
                 solicitudParsed[0] = 's';
-            }
-            else{
+                printf("Insertado\n");
+            
+            } else{
                 solicitudParsed[0] = 'n';
+                printf("No Insertado\n");
             }
         } else if (solicitudParsed[0] == 's'){
-            if (numPuestosOcupados > 0){
+            if ((numPuestosOcupados > 0) && (eliminarEnConj(&carros, identificador)==0)){
                 numPuestosOcupados--;
                 solicitudParsed[0] = 's';
             }
@@ -179,6 +179,8 @@ int main(int argc, char **argv){
         } else if (numBytesEnviados != numBytesRecibidos){
             fprintf(stderr," No se envió el número correcto de bytes.\n");
         }
+        
+        imprimirConj(carros);
         
         free(solicitudParsed);
         solicitudParsed = (char *)calloc(LON_MAX_MENSAJE, 1);

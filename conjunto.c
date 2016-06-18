@@ -32,7 +32,7 @@ int insertarEnConj(struct conj *conjunto, char *identificador){
     int encontrado = 0;
     while (conjActual){
         if (conjActual->elemento){
-            if (strcmp(conjActual->elemento->identificador, identificador)==1){
+            if (strcmp(conjActual->elemento->identificador, identificador)==0){
                 encontrado = 1;
                 break;
             }
@@ -62,7 +62,7 @@ void liberarConj(struct conj *conjunto){
             free(conjAnterior->elemento);
         }
         free(conjAnterior);
-    }
+    }   
 }
 
 
@@ -77,8 +77,7 @@ int eliminarEnConj(struct conj **conjunto, char *identificador){
         conjAnterior = conjActual;
         conjActual = conjActual->siguiente;
         if (conjAnterior->elemento){
-            printf("ElementoEl: %s\n", conjAnterior->elemento->identificador);
-            if (strcmp(conjAnterior->elemento->identificador, identificador)==1){
+            if (strcmp(conjAnterior->elemento->identificador, identificador)==0){
                 
                 if(numero==1){
                     *conjunto = conjActual;
@@ -108,7 +107,7 @@ int eliminarEnConj(struct conj **conjunto, char *identificador){
             aux = aux->siguiente;
         }
         numero++;
-        printf("aux: %s\n", aux->elemento->identificador);
+        
     }
     
     return liberado;
@@ -121,7 +120,7 @@ void imprimirConj(struct conj *conjunto){
         conjAnterior = conjActual;
         conjActual = conjActual->siguiente;
         if (conjAnterior->elemento){
-            printf("Elemento %s\n", conjAnterior->elemento->identificador);
+            printf("Elemento de Conj %s\n", conjAnterior->elemento->identificador);
         }
     }
 }
@@ -141,7 +140,8 @@ int main(int argc, char **argv){
     insertarEnConj(carros, carroID2);
     insertarEnConj(carros, carroID3);
     insertarEnConj(carros, carroID4);
-    if (eliminarEnConj(&carros, '1')){
+    imprimirConj(carros);
+    if (eliminarEnConj(&carros, carroID4)){
         printf("Liberado\n");
     }else{
         printf("No Liberado\n");
