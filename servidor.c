@@ -13,8 +13,11 @@
 #define LON_MAX_ID 50
 #define NUM_INTENTOS 3
 #define LON_MAX_MENSAJE 50
+#define NUM_MAX_PUESTOS 30
 
 int main(int argc, char **argv){
+    
+    int numPuestosOcupados = 0;
     
     if (argc != 7){
         fprintf(stderr,"Número incorrecto de argumentos.\nUso correcto:\n");
@@ -32,35 +35,27 @@ int main(int argc, char **argv){
             case 'i':
                 if (LON_MAX_STRNG < strlen(optarg)){
                     fprintf(stderr,"Bitácora de Entrada: Longitud máxima de nombre sobrepasada.\n");
-                    free(bitacoraSalida);
-                    free(puerto);
                     abort();
                 }
-                bitacoraEntrada = strdup(optarg);
+                bitacoraEntrada = optarg;
                 break;
              case 'l':
                 if (strlen(optarg) != 4){
                     fprintf(stderr,"Número de puerto de tamaño equivocado.\n");
-                    free(bitacoraEntrada);
-                    free(bitacoraSalida);
                     abort();
                 } else if (!atoi(optarg)){
                     fprintf(stderr,"El puerto ha de ser un número.\n");
-                    free(bitacoraEntrada);
-                    free(bitacoraSalida);
                     abort();
                 }
                 
-                puerto = strdup(optarg);
+                puerto = optarg;
                 break;
              case 'o':
                  if (LON_MAX_STRNG < strlen(optarg)){
                      fprintf(stderr,"Bitácora de Salida: Longitud máxima de nombre sobrepasada.\n");
-                     free(bitacoraEntrada);
-                     free(puerto);
                      abort();
                  }
-                 bitacoraSalida = strdup(optarg);
+                 bitacoraSalida = optarg;
                  break;
                 
              default:
@@ -90,9 +85,6 @@ int main(int argc, char **argv){
     int codigoErr;
     if ((codigoErr = getaddrinfo(NULL, puerto, &infoDir, &dirServ)) != 0){
         fprintf(stderr," Problema al obtener información sobre el servidor.\n");
-        free(bitacoraSalida);
-        free(bitacoraEntrada);
-        free(puerto);
         gai_strerror(codigoErr);
         abort();
     }
@@ -100,24 +92,17 @@ int main(int argc, char **argv){
     int socketSrvdrClt = socket(dirServ->ai_family, dirServ->ai_socktype, dirServ->ai_protocol);
     if (!socketSrvdrClt){
         fprintf(stderr," Problema al crear el socket.\n");
-        free(bitacoraSalida);
-        free(bitacoraEntrada);
-        free(puerto);
         abort();
     }
     
     
     if (bind(socketSrvdrClt, dirServ->ai_addr, dirServ->ai_addrlen) != 0){
         fprintf(stderr,"No se pudo enlazar el socket.\n");
-        free(bitacoraSalida);
-        free(bitacoraEntrada);
-        free(puerto);
         abort();
     }
     
     
     freeaddrinfo(dirServ);
-    
     
     
     while(1){
@@ -134,17 +119,43 @@ int main(int argc, char **argv){
         
         if (!numBytesRecibidos){
             fprintf(stderr,"Error al recibir solicitud.\n");
-            free(bitacoraSalida);
-            free(bitacoraEntrada);
-            free(puerto);
             abort();
         }
         
         solicitud[strlen(solicitud)] = '\0';
         printf("Solicitud: %s\n", solicitud);
         
-        if (solicitud[0]=='s'){
-            break;
+        if (solicitud[0]=='e'){
+            if (numPuestosOcupados < NUM_MAX_PUESTOS){
+                numPuestosOcupados++;
+                solicitud[0] = 's';
+            }
+            else{
+                solicitud[0] = 'n';
+            }
+        } else if (solicitud[0] == 's'){
+            if (numPuestosOcupados > 0){
+                numPuestosOcupados--;
+                solicitud[0] = 's';
+            }
+            else{
+                solicitud[0] = 'n';
+            }
+        }
+        printf("Puestos Ocupados: %d\n", numPuestosOcupados);
+        
+        ssize_t numBytesEnviados = sendto(socketSrvdrClt, 
+                                        solicitud, 
+                                        numBytesRecibidos,
+                                        0,
+                                        (struct sockaddr *) &dirClnt, 
+                                        tamanoSocket);
+        
+        if (numBytesEnviados < 0){
+            fprintf(stderr,"Error al enviar respuesta.\n");
+            abort();
+        } else if (numBytesEnviados != numBytesRecibidos){
+            fprintf(stderr," No se envió el número correcto de bytes.\n");
         }
         
     }
@@ -212,9 +223,6 @@ int main(int argc, char **argv){
     */
     
     
-    free(bitacoraEntrada);
-    free(bitacoraSalida);
-    free(puerto);
     
     return 0;
 }

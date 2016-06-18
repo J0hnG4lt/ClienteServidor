@@ -31,55 +31,37 @@ int main(int argc, char **argv){
             case 'd':
                 if (LON_MAX_DIR < strlen(optarg)){
                     fprintf(stderr,"Longitud máxima de dirección sobrepasada.\n");
-                    free(accion);
-                    free(puerto);
-                    free(identificador);
                     abort();
                 }
-                direccion = strdup(optarg);
+                direccion = optarg;
                 break;
              case 'p':
                 if (strlen(optarg) != 4){
                     fprintf(stderr,"Número de puerto de tamaño equivocado.\n");
-                    free(accion);
-                    free(direccion);
-                    free(identificador);
                     abort();
                 } else if (!atoi(optarg)){
                     fprintf(stderr,"El puerto ha de ser un número.\n");
-                    free(accion);
-                    free(direccion);
-                    free(identificador);
                     abort();
                 }
                 
-                puerto = strdup(optarg);
+                puerto = optarg;
                 break;
              case 'c':
                 if ((*optarg != 'e') && (*optarg != 's')){
                     fprintf(stderr,"Tipo de acción equivocada. Debe ser 'e' para entrada o 's' para salida\n");
-                    free(direccion);
-                    free(identificador);
-                    free(puerto);
                     abort();
                 }
-                accion = strdup(optarg);
+                accion = optarg;
                 break;
              case 'i':
                 if (strlen(optarg) > LON_MAX_ID){
                     fprintf(stderr,"Longitud máxima de identificador sobrepasada.\n");
-                    free(accion);
-                    free(direccion);
-                    free(puerto);
                     abort();
                 } else if (!atoi(optarg)){
                     fprintf(stderr,"El identificador ha de ser un número.\n");
-                    free(accion);
-                    free(direccion);
-                    free(puerto);
                     abort();
                 }
-                identificador = strdup(optarg);
+                identificador = optarg;
                 break;
              
              default:
@@ -105,10 +87,6 @@ int main(int argc, char **argv){
     int codigoErr;
     if ((codigoErr =getaddrinfo(direccion, puerto, &infoDir, &dirServ)) != 0){
         fprintf(stderr," Problema al obtener información sobre el servidor.\n");
-        free(puerto);
-        free(identificador);
-        free(accion);
-        free(direccion);
         gai_strerror(codigoErr);
         abort();
     }
@@ -116,10 +94,6 @@ int main(int argc, char **argv){
     int socketCltSrvdr = socket(dirServ->ai_family, dirServ->ai_socktype, dirServ->ai_protocol);
     if (!socketCltSrvdr){
         fprintf(stderr," Problema al crear el socket.\n");
-        free(puerto);
-        free(identificador);
-        free(accion);
-        free(direccion);
         abort();
     }
     
@@ -133,17 +107,9 @@ int main(int argc, char **argv){
     
     if (!socketCltSrvdr){
         fprintf(stderr," Problema al enviar información.\n");
-        free(puerto);
-        free(identificador);
-        free(accion);
-        free(direccion);
         abort();
     } else if (numBytesEnviados != (size_t)strlen(mensaje)) {
         fprintf(stderr," No se envió el número correcto de bytes.\n");
-        free(puerto);
-        free(identificador);
-        free(accion);
-        free(direccion);
         abort();
     }
     
@@ -159,17 +125,9 @@ int main(int argc, char **argv){
     
     if (!numBytesRecibidos ){
         fprintf(stderr," No se recibió ningún mensaje.\n");
-        free(puerto);
-        free(identificador);
-        free(accion);
-        free(direccion);
         abort();
     } else if (numBytesRecibidos != numBytesEnviados) {
         fprintf(stderr," No se recibió el número correcto de bytes.\n");
-        free(puerto);
-        free(identificador);
-        free(accion);
-        free(direccion);
         abort();
     }
     
@@ -185,10 +143,6 @@ int main(int argc, char **argv){
     free(mensaje);
     
     printf("ID:%s, Puerto:%s, Accion:%s, Direccion:%s\n", identificador, puerto, accion, direccion);
-    free(direccion);
-    free(accion);
-    free(puerto);
-    free(identificador);
     
     return 0;
 }
