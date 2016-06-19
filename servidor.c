@@ -30,6 +30,9 @@ int main(int argc, char **argv){
     char *separador = (char *)malloc(sizeof(char)*2);
     separador[0] = ';';
     separador[1] = '\0';
+    FILE *archivoBitacoraEntrada;
+    FILE *archivoBitacoraSalida;
+    
     
     if (argc != 7){
         fprintf(stderr,"Número incorrecto de argumentos.\nUso correcto:\n");
@@ -47,6 +50,8 @@ int main(int argc, char **argv){
     
     void manejadorINTERRUPT(int num){
         free(solicitudParsed);
+        fclose(archivoBitacoraEntrada);
+        fclose(archivoBitacoraSalida);
         exit(0);
     }
     
@@ -91,6 +96,18 @@ int main(int argc, char **argv){
     }
     
     printf("Puerto:%s, In:%s, Out:%s\n",puerto,bitacoraEntrada, bitacoraSalida);
+    
+    archivoBitacoraEntrada = fopen(bitacoraEntrada, "w");
+    
+    if (archivoBitacoraEntrada == NULL){
+        fprintf(stderr, "No se pudo abrir la bitácora de entrada\n");
+    }
+    
+    archivoBitacoraSalida = fopen(bitacoraSalida, "w");
+    
+    if (archivoBitacoraSalida == NULL){
+        fprintf(stderr, "No se pudo abrir la bitácora de salida\n");
+    }
     
     
     struct addrinfo infoDir;
@@ -158,7 +175,11 @@ int main(int argc, char **argv){
         strncat(solicitudParsed, separador, strlen(separador));
         printf("Solicitud: %s\n", solicitudParsed);
         
+        
         if (solicitudParsed[0]=='e'){
+            
+            fprintf(archivoBitacoraEntrada, "%s\n",solicitudParsed);
+            
             if(carros == NULL){
                 carros = (struct conj *)malloc(sizeof(struct conj));
                 inicializarConj(carros, identificador);
@@ -173,6 +194,9 @@ int main(int argc, char **argv){
                 solicitudParsed[0] = 'n';
             }
         } else if (solicitudParsed[0] == 's'){
+            
+            fprintf(archivoBitacoraSalida, "%s\n",solicitudParsed);
+            
             if ((numPuestosOcupados > 0) && (eliminarEnConj(&carros, identificador)==1)){
                 numPuestosOcupados--;
                 solicitudParsed[0] = 's';
