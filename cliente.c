@@ -7,29 +7,33 @@
 #include <netdb.h>
 #include <errno.h>
 #include <time.h>
+#include "configuracion.h"
 
-#define LON_MAX_DIR 50
-#define LON_MAX_ID 50
-#define NUM_INTENTOS 3
-#define LON_MAX_MENSAJE 100
-#define TAM_MAX_ID 1000
-#define TIEMPO_MAX_USEG 100000
-#define TIEMPO_MAX_SEG 0
+// Autores: Georvic Tur           12-11402
+//          Alfredo Fanghella     12-10967
+
+//Constantes definidas en el archivo de configuración
 
 int main(int argc, char **argv){
     
     if (argc != 9){
         fprintf(stderr,"Número incorrecto de argumentos.\nUso correcto:\n");
-        fprintf(stderr,"\tsem_cli -d <dirección IP o nombre de dominio>\n \t\t-p <puerto>\n \t\t-c <acción>\n \t\t-i <identificador de vehículo>\n");
+        fprintf(stderr,"\tsem_cli \
+                -d <dirección IP o nombre de dominio>\n \t\t\
+                -p <puerto>\n \t\t\
+                -c <acción>\n \t\t\
+                -i <identificador de vehículo>\n");
         abort();
     }
     
-    char *direccion=NULL;
-    char *puerto=NULL;
-    char *accion=NULL;
-    char *identificador=NULL;
+    //Argumentos del cliente
+    char *direccion=NULL; //Nombre de dominio o IP
+    char *puerto=NULL; //Número de Puerto
+    char *accion=NULL; //Entrada o Salida
+    char *identificador=NULL; //ID del carro
     
-    int opcn;
+    int opcn; //Se parsean los argumentos del cliente
+              //optarg es una variable global con un apuntador al argumento actual
     while ((opcn = getopt(argc,argv, "d:p:c:i:")) != -1){
         switch(opcn){
             case 'd':
@@ -43,7 +47,7 @@ int main(int argc, char **argv){
                 if (strlen(optarg) != 4){
                     fprintf(stderr,"Número de puerto de tamaño equivocado.\n");
                     abort();
-                } else if (!atoi(optarg)){
+                } else if (!atoi(optarg)){ //Se usa atoi para ver si optarg es un número
                     fprintf(stderr,"El puerto ha de ser un número.\n");
                     abort();
                 }
@@ -70,19 +74,22 @@ int main(int argc, char **argv){
              
              default:
                 abort();
-        
         }
         
     }
     
+    //Este es el separador para distinguir los elementos del mensaje
     char *separador = (char *)malloc(sizeof(char));
     *separador = ';';
+    
+    //El mensaje tiene la acción (Entrar o Salir) y el ID del carro
     char *mensaje = malloc(strlen(accion)+strlen(identificador)+3);
     strncat(mensaje, accion, strlen(accion));
     strncat(mensaje, separador, strlen(separador));
     strncat(mensaje, identificador, strlen(identificador));
     strncat(mensaje, separador, strlen(separador));
     
+    //El tipo de socket a usar (UDP)
     struct addrinfo infoDir;
     memset(&infoDir, 0, sizeof(infoDir));
     infoDir.ai_family = AF_UNSPEC;
@@ -90,7 +97,7 @@ int main(int argc, char **argv){
     infoDir.ai_protocol = IPPROTO_UDP;
     
     
-    
+    //Configuracion del socket
     struct addrinfo *dirServ;
     int codigoErr;
     if ((codigoErr=getaddrinfo(direccion, puerto, &infoDir, &dirServ)) != 0){
@@ -100,7 +107,7 @@ int main(int argc, char **argv){
     }
     
     
-    
+    //Creación del socket
     int socketCltSrvdr = socket(dirServ->ai_family, dirServ->ai_socktype, dirServ->ai_protocol);
     if (socketCltSrvdr == -1){
         fprintf(stderr," Problema al crear el socket.\n");
@@ -108,19 +115,20 @@ int main(int argc, char **argv){
     }
     
     
-    
+    //Estructura para establecer el timeout de la espera por la respuesta
+    //del servidor.
     struct timeval tiempoEsperaMax;
     tiempoEsperaMax.tv_sec = TIEMPO_MAX_SEG;
     tiempoEsperaMax.tv_usec = TIEMPO_MAX_USEG;
     
-    
+    //Se configura el socket para esperar un tiempo máximo al recibir
     if (setsockopt(socketCltSrvdr, 
                     SOL_SOCKET, 
                     SO_RCVTIMEO, 
                     &tiempoEsperaMax, 
                     sizeof(tiempoEsperaMax))){
         
-        fprintf(stderr," Problema al establecer opciones de socket.\n");
+        fprintf(stderr," Problema al establecer tiempo máximo de espera\n");
         abort();
     }
     
@@ -132,8 +140,7 @@ int main(int argc, char **argv){
     ssize_t numBytesRecibidos = 0;
     int i=0;
     
-    
-    
+    //Se repite hasta que se envíe y reciba la info o se agoten los intentos
     while((i < NUM_INTENTOS) && ((numBytesEnviados==-1) || (numBytesRecibidos < 0))){
         
         numBytesEnviados = sendto(socketCltSrvdr, 
@@ -151,6 +158,7 @@ int main(int argc, char **argv){
         i++;
     }
     
+    
     if (!socketCltSrvdr){
         fprintf(stderr,"Problema al enviar información.\n");
     }
@@ -164,17 +172,18 @@ int main(int argc, char **argv){
         abort();
     }
     
-
     
+    //Respuestas del servidor
     char *permisoEntrar = strdup(strtok(mensajeRecibido, separador));
     char *identificadorRcbd = strdup(strtok(NULL, separador));
     char *horaFecha = strdup(strtok(NULL, separador));
-    printf("Todo bien\n");
     
+    //Se verifica que el identificador recibido corresponda al cliente actual
     if (strcmp(identificadorRcbd, identificador) != 0){
         fprintf(stderr," Respuesta recibida no corresponde al conductor.\n");
         abort();
     }
+    
     
     mensajeRecibido[LON_MAX_MENSAJE] = '\0';
     printf("Permiso: %s, Identificador: %s, Hora: %s\n", permisoEntrar, identificadorRcbd, horaFecha);
