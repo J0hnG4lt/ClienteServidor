@@ -151,29 +151,20 @@ int main(int argc, char **argv){
         i++;
     }
     
+    if (!socketCltSrvdr){
+        fprintf(stderr,"Problema al enviar información.\n");
+    }
+    
+    if (numBytesRecibidos == -1){
+        fprintf(stderr,"No se recibió ningún mensaje.\n");
+    }
+    
     if (i==NUM_INTENTOS){
         fprintf(stderr,"Tiempo de respuesta agotado.\n");
         abort();
     }
     
-    if (!socketCltSrvdr){
-        fprintf(stderr," Problema al enviar información.\n");
-        abort();
-    }// else if (numBytesEnviados != (size_t)strlen(mensaje)) {
-     //   fprintf(stderr," No se envió el número correcto de bytes.\n");
-     //   abort();
-     //}
-    
-    
-    
-    
-    if (!numBytesRecibidos ){
-        fprintf(stderr," No se recibió ningún mensaje.\n");
-        abort();
-    }// else if (numBytesRecibidos != numBytesEnviados) {
-     //   fprintf(stderr," No se recibió el número correcto de bytes.\n");
-     //   abort();
-     //}
+
     
     char *permisoEntrar = strdup(strtok(mensajeRecibido, separador));
     char *identificadorRcbd = strdup(strtok(NULL, separador));

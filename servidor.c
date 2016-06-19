@@ -92,11 +92,6 @@ int main(int argc, char **argv){
     
     printf("Puerto:%s, In:%s, Out:%s\n",puerto,bitacoraEntrada, bitacoraSalida);
     
-    /*
-    char *mensaje = malloc(strlen(accion)+strlen(identificador)+1);
-    strncat(mensaje, accion, strlen(accion));
-    strncat(mensaje, identificador, strlen(identificador));
-    */
     
     struct addrinfo infoDir;
     memset(&infoDir, 0, sizeof(infoDir));
