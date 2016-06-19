@@ -10,7 +10,7 @@
 #define LON_MAX_DIR 50
 #define LON_MAX_ID 50
 #define NUM_INTENTOS 3
-#define LON_MAX_MENSAJE 50
+#define LON_MAX_MENSAJE 100
 #define TAM_MAX_ID 1000
 
 int main(int argc, char **argv){
@@ -73,7 +73,7 @@ int main(int argc, char **argv){
     }
     
     char *separador = (char *)malloc(sizeof(char));
-    *separador = ':';
+    *separador = ';';
     char *mensaje = malloc(strlen(accion)+strlen(identificador)+3);
     strncat(mensaje, accion, strlen(accion));
     strncat(mensaje, separador, strlen(separador));
@@ -104,17 +104,17 @@ int main(int argc, char **argv){
     ssize_t numBytesEnviados=-1;
     int i=0;
     while((i < NUM_INTENTOS) && (numBytesEnviados==-1)){
-        numBytesEnviados = sendto(socketCltSrvdr, mensaje, (size_t)strlen(mensaje), 0, dirServ->ai_addr, dirServ->ai_addrlen);
+        numBytesEnviados = sendto(socketCltSrvdr, mensaje, LON_MAX_MENSAJE, 0, dirServ->ai_addr, dirServ->ai_addrlen);
         i++;
     }
     
     if (!socketCltSrvdr){
         fprintf(stderr," Problema al enviar información.\n");
         abort();
-    } else if (numBytesEnviados != (size_t)strlen(mensaje)) {
-        fprintf(stderr," No se envió el número correcto de bytes.\n");
-        abort();
-    }
+    }// else if (numBytesEnviados != (size_t)strlen(mensaje)) {
+     //   fprintf(stderr," No se envió el número correcto de bytes.\n");
+     //   abort();
+     //}
     
     
     struct sockaddr_storage dirOrigenServ;
@@ -129,14 +129,23 @@ int main(int argc, char **argv){
     if (!numBytesRecibidos ){
         fprintf(stderr," No se recibió ningún mensaje.\n");
         abort();
-    } else if (numBytesRecibidos != numBytesEnviados) {
-        fprintf(stderr," No se recibió el número correcto de bytes.\n");
+    }// else if (numBytesRecibidos != numBytesEnviados) {
+     //   fprintf(stderr," No se recibió el número correcto de bytes.\n");
+     //   abort();
+     //}
+    
+    char *permisoEntrar = strdup(strtok(mensajeRecibido, separador));
+    char *identificadorRcbd = strdup(strtok(NULL, separador));
+    char *horaFecha = strdup(strtok(NULL, separador));
+    
+    if (strcmp(identificadorRcbd, identificador) != 0){
+        fprintf(stderr," Respuesta recibida no corresponde al conductor.\n");
         abort();
     }
     
-    mensajeRecibido[strlen(mensaje)] = '\0';
+    mensajeRecibido[LON_MAX_MENSAJE] = '\0';
     printf("Mensaje Recibido %s\n", mensajeRecibido);
-    
+    printf("Permiso: %s, Identificador: %s, Hora: %s\n", permisoEntrar, identificadorRcbd, horaFecha);
     freeaddrinfo(dirServ);
     
     close(socketCltSrvdr);

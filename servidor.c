@@ -6,24 +6,30 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <errno.h>
+#include  <signal.h>
+#include <time.h>
 #include "conjunto.h"
+
 
 #define LON_MAX_STRNG 50
 #define LON_MAX_DIR 50
 #define LON_MAX_ID 50
 #define NUM_INTENTOS 3
-#define LON_MAX_MENSAJE 50
+#define LON_MAX_MENSAJE 100
 #define NUM_MAX_PUESTOS 30
 #define TAM_MAX_ID 1000
 
 
+void manejadorINTERRUPT(int num);
 
 
 int main(int argc, char **argv){
     
     int numPuestosOcupados = 0;
     struct conj *carros = NULL;
-    char separador = ':';
+    char *separador = (char *)malloc(sizeof(char)*2);
+    separador[0] = ';';
+    separador[1] = '\0';
     
     if (argc != 7){
         fprintf(stderr,"Número incorrecto de argumentos.\nUso correcto:\n");
@@ -38,6 +44,17 @@ int main(int argc, char **argv){
     char *accion = NULL;
     char *identificador = NULL;
     int opcn;
+    
+    void manejadorINTERRUPT(int num){
+        free(solicitudParsed);
+        exit(0);
+    }
+    
+    signal(SIGINT, manejadorINTERRUPT);
+    
+    time_t tiempo = time(NULL);
+    char *tiempoString = asctime(localtime(&tiempo));
+    
     while ((opcn = getopt(argc,argv, "l:i:o:")) != -1){
         switch(opcn){
             case 'i':
@@ -131,29 +148,34 @@ int main(int argc, char **argv){
         }
         
         solicitud[strlen(solicitud)] = '\0';
-        accion = strdup(strtok(solicitud, &separador));
-        identificador = strdup(strtok(NULL, &separador));
+        accion = strdup(strtok(solicitud, separador));
+        identificador = strdup(strtok(NULL, separador));
+        
+        tiempo = time(NULL);
+        tiempoString = asctime(localtime(&tiempo));
+        tiempoString[strlen(tiempoString)-1] = '\0';
+        
         strncpy(solicitudParsed, accion, strlen(accion));
+        strncat(solicitudParsed, separador, strlen(separador));
         strncat(solicitudParsed, identificador, strlen(identificador));
+        strncat(solicitudParsed, separador, strlen(separador));
+        strncat(solicitudParsed, tiempoString, strlen(tiempoString));
+        strncat(solicitudParsed, separador, strlen(separador));
         printf("Solicitud: %s\n", solicitudParsed);
         
         if (solicitudParsed[0]=='e'){
-            printf("Entrada\n");
             if(carros == NULL){
                 carros = (struct conj *)malloc(sizeof(struct conj));
                 inicializarConj(carros, identificador);
-                printf("Carro inicializado\n");
                 numPuestosOcupados++;
                 solicitudParsed[0] = 's';
                 
             } else if ((numPuestosOcupados < NUM_MAX_PUESTOS) && (insertarEnConj(carros, identificador) == 0)){
                 numPuestosOcupados++;
                 solicitudParsed[0] = 's';
-                printf("Insertado\n");
             
             } else{
                 solicitudParsed[0] = 'n';
-                printf("No Insertado\n");
             }
         } else if (solicitudParsed[0] == 's'){
             if ((numPuestosOcupados > 0) && (eliminarEnConj(&carros, identificador)==1)){
@@ -191,3 +213,5 @@ int main(int argc, char **argv){
     
     return 0;
 }
+
+
