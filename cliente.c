@@ -6,12 +6,15 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <errno.h>
+#include <time.h>
 
 #define LON_MAX_DIR 50
 #define LON_MAX_ID 50
 #define NUM_INTENTOS 3
 #define LON_MAX_MENSAJE 100
 #define TAM_MAX_ID 1000
+#define TIEMPO_MAX_USEG 100000
+#define TIEMPO_MAX_SEG 0
 
 int main(int argc, char **argv){
     
@@ -86,26 +89,71 @@ int main(int argc, char **argv){
     infoDir.ai_socktype = SOCK_DGRAM;
     infoDir.ai_protocol = IPPROTO_UDP;
     
+    
+    
     struct addrinfo *dirServ;
     int codigoErr;
-    if ((codigoErr =getaddrinfo(direccion, puerto, &infoDir, &dirServ)) != 0){
+    if ((codigoErr=getaddrinfo(direccion, puerto, &infoDir, &dirServ)) != 0){
         fprintf(stderr," Problema al obtener información sobre el servidor.\n");
         gai_strerror(codigoErr);
         abort();
     }
     
+    
+    
     int socketCltSrvdr = socket(dirServ->ai_family, dirServ->ai_socktype, dirServ->ai_protocol);
-    if (!socketCltSrvdr){
+    if (socketCltSrvdr == -1){
         fprintf(stderr," Problema al crear el socket.\n");
         abort();
     }
     
     
+    
+    struct timeval tiempoEsperaMax;
+    tiempoEsperaMax.tv_sec = TIEMPO_MAX_SEG;
+    tiempoEsperaMax.tv_usec = TIEMPO_MAX_USEG;
+    
+    
+    if (setsockopt(socketCltSrvdr, 
+                    SOL_SOCKET, 
+                    SO_RCVTIMEO, 
+                    &tiempoEsperaMax, 
+                    sizeof(tiempoEsperaMax))){
+        
+        fprintf(stderr," Problema al establecer opciones de socket.\n");
+        abort();
+    }
+    
+    
     ssize_t numBytesEnviados=-1;
+    struct sockaddr_storage dirOrigenServ;
+    char mensajeRecibido[LON_MAX_MENSAJE + 1];
+    socklen_t tamanoSocket = sizeof(dirOrigenServ);
+    ssize_t numBytesRecibidos = 0;
     int i=0;
-    while((i < NUM_INTENTOS) && (numBytesEnviados==-1)){
-        numBytesEnviados = sendto(socketCltSrvdr, mensaje, LON_MAX_MENSAJE, 0, dirServ->ai_addr, dirServ->ai_addrlen);
+    
+    
+    
+    while((i < NUM_INTENTOS) && ((numBytesEnviados==-1) || (numBytesRecibidos < 0))){
+        
+        numBytesEnviados = sendto(socketCltSrvdr, 
+                                    mensaje, 
+                                    LON_MAX_MENSAJE, 
+                                    0, 
+                                    dirServ->ai_addr, 
+                                    dirServ->ai_addrlen);
+        
+        numBytesRecibidos = recvfrom(socketCltSrvdr, mensajeRecibido, 
+                                    LON_MAX_MENSAJE, 0,
+                                    (struct sockaddr *) &dirOrigenServ, 
+                                    &tamanoSocket);
+        
         i++;
+    }
+    
+    if (i==NUM_INTENTOS){
+        fprintf(stderr,"Tiempo de respuesta agotado.\n");
+        abort();
     }
     
     if (!socketCltSrvdr){
@@ -117,13 +165,6 @@ int main(int argc, char **argv){
      //}
     
     
-    struct sockaddr_storage dirOrigenServ;
-    char mensajeRecibido[LON_MAX_MENSAJE + 1];
-    socklen_t tamanoSocket = sizeof(dirOrigenServ);
-    ssize_t numBytesRecibidos = recvfrom(socketCltSrvdr, mensajeRecibido, 
-                                    LON_MAX_MENSAJE, 0,
-                                    (struct sockaddr *) &dirOrigenServ, 
-                                    &tamanoSocket);
     
     
     if (!numBytesRecibidos ){
@@ -137,6 +178,7 @@ int main(int argc, char **argv){
     char *permisoEntrar = strdup(strtok(mensajeRecibido, separador));
     char *identificadorRcbd = strdup(strtok(NULL, separador));
     char *horaFecha = strdup(strtok(NULL, separador));
+    printf("Todo bien\n");
     
     if (strcmp(identificadorRcbd, identificador) != 0){
         fprintf(stderr," Respuesta recibida no corresponde al conductor.\n");
@@ -144,7 +186,6 @@ int main(int argc, char **argv){
     }
     
     mensajeRecibido[LON_MAX_MENSAJE] = '\0';
-    printf("Mensaje Recibido %s\n", mensajeRecibido);
     printf("Permiso: %s, Identificador: %s, Hora: %s\n", permisoEntrar, identificadorRcbd, horaFecha);
     freeaddrinfo(dirServ);
     
@@ -153,6 +194,10 @@ int main(int argc, char **argv){
     printf("Mensaje: %s\n", mensaje);
     
     free(mensaje);
+    
+    free(horaFecha);
+    free(permisoEntrar);
+    free(identificadorRcbd);
     
     printf("ID:%s, Puerto:%s, Accion:%s, Direccion:%s\n", identificador, puerto, accion, direccion);
     
