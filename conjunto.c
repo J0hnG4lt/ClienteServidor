@@ -7,9 +7,10 @@
 #include <netdb.h>
 #include <errno.h>
 
+// Autores: Georvic Tur           12-11402
+//          Alfredo Fanghella     12-10967
 
-
-
+//Se usa una lista enlazada para implementar un conjunto de identificadores
 struct nodo {
     char *identificador;
 };
@@ -19,6 +20,13 @@ struct conj {
     struct conj *siguiente;
 };
 
+/**
+ * Introduce el primer elemento al conjunto vacío.
+ *
+ * @param conjunto Conjunto vacío cuya memoria ya ha sido asignada
+ * @param identificador ID numérico del carro
+ * 
+ */
 void inicializarConj(struct conj *conjunto, char *identificador){
     conjunto->siguiente = NULL;
     struct nodo *nuevoNodo = (struct nodo *)malloc(sizeof(struct nodo));
@@ -26,6 +34,15 @@ void inicializarConj(struct conj *conjunto, char *identificador){
     conjunto->elemento = nuevoNodo;
 }
 
+
+/**
+ * Inserta un elemento en el conjunto. Si este elemento ya existe en el
+ * mismo, entonces no se hace nada. De lo contrario, se inserta al final.
+ *
+ * @param conjunto Conjunto que ya ha sido inicializado
+ * @param identificador ID numérico del carro
+ * @return 0 si el conjunto no tenía ya el identificador. Es 1 de lo contrario.
+ */
 int insertarEnConj(struct conj *conjunto, char *identificador){
     struct conj *conjActual = conjunto;
     struct conj *conjAnterior = NULL;
@@ -52,6 +69,11 @@ int insertarEnConj(struct conj *conjunto, char *identificador){
 }
 
 
+/**
+ * Libera la memoria usada por el conjunto
+ * 
+ * @param conjunto Conjunto que ya ha sido inicializado
+ */
 void liberarConj(struct conj *conjunto){
     struct conj *conjActual = conjunto;
     struct conj *conjAnterior = NULL;
@@ -66,6 +88,13 @@ void liberarConj(struct conj *conjunto){
 }
 
 
+/**
+ * Elimina un nodo del conjunto si éste contiene al identificador
+ * 
+ * @param conjunto Conjunto que ya ha sido inicializado
+ * @param identificador ID numérico del carro a eliminar del conjunto
+ * @return 1 si el conjunto tenía el identificador que fue liberado. Es 0 de lo contrario.
+ */
 int eliminarEnConj(struct conj **conjunto, char *identificador){
     struct conj *conjActual = *conjunto;
     struct conj *conjAnterior = NULL;
@@ -113,6 +142,12 @@ int eliminarEnConj(struct conj **conjunto, char *identificador){
     return liberado;
 }
 
+/**
+ * Imprime los elementos del conjunto.
+ *
+ * @param conjunto Conjunto que ya ha sido inicializado
+ * 
+ */
 void imprimirConj(struct conj *conjunto){
     struct conj *conjActual = conjunto;
     struct conj *conjAnterior = NULL;
