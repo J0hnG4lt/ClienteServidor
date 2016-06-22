@@ -13,7 +13,7 @@
 //          Alfredo Fanghella     12-10967
 
 //Constantes definidas en el archivo de configuración
-
+#define MAX_PUERTO 65535
 int main(int argc, char **argv){
     
     if (argc != 9){
@@ -34,6 +34,8 @@ int main(int argc, char **argv){
     
     int opcn; //Se parsean los argumentos del cliente
               //optarg es una variable global con un apuntador al argumento actual
+    char * err;
+	long numPuerto;
     while ((opcn = getopt(argc,argv, "d:p:c:i:")) != -1){
         switch(opcn){
             case 'd':
@@ -44,14 +46,11 @@ int main(int argc, char **argv){
                 direccion = optarg;
                 break;
              case 'p':
-                if (strlen(optarg) != 4){
-                    fprintf(stderr,"Número de puerto de tamaño equivocado.\n");
-                    abort();
-                } else if (!atoi(optarg)){ //Se usa atoi para ver si optarg es un número
-                    fprintf(stderr,"El puerto ha de ser un número.\n");
-                    abort();
-                }
-                
+				numPuerto = strtol(optarg, &err, 10);
+				if ((*err != '\0') || (numPuerto < 1) || (numPuerto > MAX_PUERTO)) {
+					fprintf(stderr, "El puerto no es válido\n");
+					abort();
+				}
                 puerto = optarg;
                 break;
              case 'c':
@@ -78,16 +77,10 @@ int main(int argc, char **argv){
         
     }
     
-    //Este es el separador para distinguir los elementos del mensaje
-    char *separador = (char *)malloc(sizeof(char));
-    *separador = ';';
-    
     //El mensaje tiene la acción (Entrar o Salir) y el ID del carro
-    char *mensaje = malloc(strlen(accion)+strlen(identificador)+3);
-    strncat(mensaje, accion, strlen(accion));
-    strncat(mensaje, separador, strlen(separador));
-    strncat(mensaje, identificador, strlen(identificador));
-    strncat(mensaje, separador, strlen(separador));
+    char *mensaje = malloc(strlen(accion)+strlen(identificador)+1);
+    mensaje[0] = *accion;
+    strcpy(&mensaje[1], identificador);
     
     //El tipo de socket a usar (UDP)
     struct addrinfo infoDir;
@@ -174,8 +167,9 @@ int main(int argc, char **argv){
     
     
     //Respuestas del servidor
-    char *permisoEntrar = strdup(strtok(mensajeRecibido, separador));
-    char *identificadorRcbd = strdup(strtok(NULL, separador));
+    char *separador =";";
+    char permisoEntrar = mensajeRecibido[0];
+    char *identificadorRcbd = strdup(strtok(&mensajeRecibido[1], separador));
     char *horaFecha = strdup(strtok(NULL, separador));
     
     //Se verifica que el identificador recibido corresponda al cliente actual
@@ -186,7 +180,7 @@ int main(int argc, char **argv){
     
     
     mensajeRecibido[LON_MAX_MENSAJE] = '\0';
-    printf("Permiso: %s, Identificador: %s, Hora: %s\n", permisoEntrar, identificadorRcbd, horaFecha);
+    printf("Permiso: %c, Identificador: %s, Hora: %s\n", permisoEntrar, identificadorRcbd, horaFecha);
     freeaddrinfo(dirServ);
     
     close(socketCltSrvdr);
@@ -196,7 +190,6 @@ int main(int argc, char **argv){
     free(mensaje);
     
     free(horaFecha);
-    free(permisoEntrar);
     free(identificadorRcbd);
     
     printf("ID:%s, Puerto:%s, Accion:%s, Direccion:%s\n", identificador, puerto, accion, direccion);

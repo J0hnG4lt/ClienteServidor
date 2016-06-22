@@ -39,10 +39,10 @@ int main(int argc, char **argv){
     char *puerto=NULL;
     
     //
-    char *accion = NULL; //Entrar o Salir del estacionamiento
+    char accion; //Entrar o Salir del estacionamiento
     char *identificador = NULL; //ID del carro actual
-    char *solicitudParsed = (char *)calloc(LON_MAX_MENSAJE, 1); //Mensaje de respuesta
-    
+    char respuesta[LON_MAX_MENSAJE];
+    memset(respuesta, 0, LON_MAX_MENSAJE);
     int numPuestosOcupados = 0; //Número de puestos ocupados
     
     struct conj *carros = NULL; //Conjunto de carros en el estacionamiento
@@ -55,7 +55,6 @@ int main(int argc, char **argv){
     
     //Manejador de interrupciones para ctr-c
     void manejadorINTERRUPT(int num){
-        free(solicitudParsed);
         fclose(archivoBitacoraEntrada);
         fclose(archivoBitacoraSalida);
         liberarConj(carros);
@@ -174,9 +173,8 @@ int main(int argc, char **argv){
         }
         
         //Se parsea el mensaje de llegada
-        solicitud[strlen(solicitud)] = '\0';
-        accion = strdup(strtok(solicitud, separador));
-        identificador = strdup(strtok(NULL, separador));
+        accion = solicitud[0];
+        identificador = strdup(&solicitud[1]);
         
         //Se obtiene el tiempo actual
         tiempo = time(NULL);
@@ -184,57 +182,56 @@ int main(int argc, char **argv){
         tiempoString[strlen(tiempoString)-1] = '\0';
         
         //Se construye el mensaje de respuesta
-        strncpy(solicitudParsed, accion, strlen(accion));
-        strncat(solicitudParsed, separador, strlen(separador));
-        strncat(solicitudParsed, identificador, strlen(identificador));
-        strncat(solicitudParsed, separador, strlen(separador));
-        strncat(solicitudParsed, tiempoString, strlen(tiempoString));
-        strncat(solicitudParsed, separador, strlen(separador));
-        printf("Solicitud: %s\n", solicitudParsed);
+        respuesta[0] = accion;
+        strcpy(&respuesta[1], identificador);
+        strncat(respuesta, separador, strlen(separador));
+        strncat(respuesta, tiempoString, strlen(tiempoString));
+        strncat(respuesta, separador, strlen(separador));
+        printf("Solicitud: %s\n", respuesta);
         
         //Si el cliente quiere salir o entrar
-        if (solicitudParsed[0]=='e'){
+        if (accion == 'e'){
             
             
             if(carros == NULL){
                 carros = (struct conj *)malloc(sizeof(struct conj));
                 inicializarConj(carros, identificador);
                 numPuestosOcupados++;
-                solicitudParsed[0] = 's'; //Sí se puede ejecutar la acción
+                respuesta[0] = 's'; //Sí se puede ejecutar la acción
                 
                 //Si quedan puestos y el carro no está ya en el conjunto
             } else if ((numPuestosOcupados < NUM_MAX_PUESTOS) && (insertarEnConj(carros, identificador) == 0)){
                 numPuestosOcupados++;
-                solicitudParsed[0] = 's'; //Sí se puede ejecutar la acción
+                respuesta[0] = 's'; //Sí se puede ejecutar la acción
             
             } else{
-                solicitudParsed[0] = 'n'; //No se puede ejecutar la acción
+                respuesta[0] = 'n'; //No se puede ejecutar la acción
             }
             
             //Se registra la operación de entrada
-            fprintf(archivoBitacoraEntrada, "%s\n",solicitudParsed);
+            fprintf(archivoBitacoraEntrada, "%s\n",respuesta);
             
             
-        } else if (solicitudParsed[0] == 's'){
+        } else if (accion == 's'){
             
             //Si hay carros y el carro que va a salir está en el conjunto
             if ((numPuestosOcupados > 0) && (eliminarEnConj(&carros, identificador)==1)){
                 numPuestosOcupados--;
-                solicitudParsed[0] = 's'; //Sí se puede ejecutar la acción
+                respuesta[0] = 's'; //Sí se puede ejecutar la acción
             }
             else{
-                solicitudParsed[0] = 'n'; //No se puede ejecutar la acción
+                respuesta[0] = 'n'; //No se puede ejecutar la acción
             }
             
             //Se registra la operación de salida
-            fprintf(archivoBitacoraSalida, "%s\n",solicitudParsed);
+            fprintf(archivoBitacoraSalida, "%s\n",respuesta);
         
         }
         printf("Puestos Ocupados: %d\n", numPuestosOcupados);
         
         //Se envía el mensaje de respuesta
         ssize_t numBytesEnviados = sendto(socketSrvdrClt, 
-                                        solicitudParsed, 
+                                        respuesta, 
                                         numBytesRecibidos,
                                         0,
                                         (struct sockaddr *) &dirClnt, 
@@ -249,14 +246,8 @@ int main(int argc, char **argv){
         
         imprimirConj(carros);
         
-        free(solicitudParsed);
-        solicitudParsed = (char *)calloc(LON_MAX_MENSAJE, 1);
-        
+        memset(respuesta, 0, LON_MAX_MENSAJE);        
     }
-    
-    free(solicitudParsed);
     
     return 0;
 }
-
-
