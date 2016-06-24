@@ -74,6 +74,9 @@ int main(int argc, char **argv){
         fclose(archivoBitacoraEntrada);
         fclose(archivoBitacoraSalida);
         liberarConj(carros);
+        printf("\n----------------\n");
+        printf("Servidor apagado\n");
+        printf("----------------\n");
         exit(0);
     }
     
@@ -121,8 +124,9 @@ int main(int argc, char **argv){
         }
     }
     
-    printf("Puerto:%s, In:%s, Out:%s\n",puerto,bitacoraEntrada, bitacoraSalida);
-    
+    printf("-------------------------------------------\n");
+    printf("Servidor escuchando en el puerto %s\n", puerto);
+    printf("-------------------------------------------\n");
     
     //Se abren los archivos
     
@@ -130,12 +134,14 @@ int main(int argc, char **argv){
     
     if (archivoBitacoraEntrada == NULL){
         fprintf(stderr, "No se pudo abrir la bitácora de entrada\n");
+        exit(EXIT_FAILURE);
     }
     
     archivoBitacoraSalida = fopen(bitacoraSalida, "w");
     
     if (archivoBitacoraSalida == NULL){
         fprintf(stderr, "No se pudo abrir la bitácora de salida\n");
+        exit(EXIT_FAILURE);
     }
     
     //Tipo de socket a usar
@@ -190,6 +196,7 @@ int main(int argc, char **argv){
             exit(EXIT_FAILURE);
         }
         
+        
         //Se parsea el mensaje de llegada
         accion = solicitud.accion;
         identificador = malloc(20);
@@ -199,7 +206,10 @@ int main(int argc, char **argv){
         tiempo = time(NULL);
         tiempoString = asctime(localtime(&tiempo));
         tiempoString[strlen(tiempoString)-1] = '\0';
-
+		
+		printf("------------------------------------\n");
+        printf("Recibida solicitud de %s en %s\n", identificador, tiempoString);
+        printf("------------------------------------\n");
         
         structTiempo = localtime(&tiempo);
 
@@ -248,7 +258,7 @@ int main(int argc, char **argv){
                 numPuestosOcupados--;
                 structRespuesta.accion = 's';//Sí se puede ejecutar la acción
                 structRespuesta.precio = htonl(obtenerPrecio(tiempo - *tiempoEstacionado));
-                printf("PRECIO: %d\n", obtenerPrecio(tiempo-*tiempoEstacionado));
+                //printf("PRECIO: %d\n", obtenerPrecio(tiempo-*tiempoEstacionado));
                 
             }
             else{
@@ -256,15 +266,17 @@ int main(int argc, char **argv){
             }
             
             //Se registra la operación de salida
-            fprintf(archivoBitacoraSalida, "Salida: %c. Identificador: %s. Tiempo: %s\n",
+            fprintf(archivoBitacoraSalida, "Salida: %c. Identificador: %s. Tiempo: %s. Monto: Bs. %d.\n",
             								structRespuesta.accion,
             								identificador,
-            								tiempoString);
+            								tiempoString,
+            								obtenerPrecio(tiempo-*tiempoEstacionado));
         
         }
-        printf("Puestos Ocupados: %d\n", numPuestosOcupados);
         
-        //memcpy(respuesta, &structRespuesta, sizeof(structRespuesta));
+        //printf("Puestos Ocupados: %d\n", numPuestosOcupados);
+        
+        
         
         //Se envía el mensaje de respuesta
         ssize_t numBytesEnviados = sendto(socketSrvdrClt, 
@@ -280,7 +292,7 @@ int main(int argc, char **argv){
             exit(EXIT_FAILURE);
         }
         
-        imprimirConj(carros);
+        //imprimirConj(carros);
         
         
     }
