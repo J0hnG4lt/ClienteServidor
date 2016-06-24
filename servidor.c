@@ -17,10 +17,23 @@
 //          Alfredo Fanghella     12-10967
 
 
-//Constantes definidas en el archivo de configuración
+//Variables Globales
+FILE *archivoBitacoraEntrada;
+FILE *archivoBitacoraSalida;
+struct conj *carros = NULL; //Conjunto de carros en el estacionamiento
+
 
 //Se una un manejador para cerrar bien el server, pues se usará ctr-c
-void manejadorINTERRUPT(int num);
+void manejadorINTERRUPT(int num){
+    fclose(archivoBitacoraEntrada);
+    fclose(archivoBitacoraSalida);
+    liberarConj(carros);
+    printf("\n----------------\n");
+    printf("Servidor apagado\n");
+    printf("----------------\n");
+    exit(0);
+}
+
 
 uint32_t obtenerPrecio(time_t duracion){
 	int horas = duracion / 3600;
@@ -53,25 +66,13 @@ int main(int argc, char **argv){
     
     time_t *tiempoEstacionado = malloc(sizeof(time_t));
     
-    struct conj *carros = NULL; //Conjunto de carros en el estacionamiento
     
     //char *separador = ";";
     //Separador de elementos del mensaje a enviar y recibir
     
-    FILE *archivoBitacoraEntrada;
-    FILE *archivoBitacoraSalida;
+
     
-    //Manejador de interrupciones para ctr-c
-    void manejadorINTERRUPT(int num){
-        fclose(archivoBitacoraEntrada);
-        fclose(archivoBitacoraSalida);
-        liberarConj(carros);
-        printf("\n----------------\n");
-        printf("Servidor apagado\n");
-        printf("----------------\n");
-        exit(0);
-    }
-    
+
     //Se registra el manejador
     signal(SIGINT, manejadorINTERRUPT);
     
