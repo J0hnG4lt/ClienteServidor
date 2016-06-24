@@ -212,13 +212,13 @@ int main(int argc, char **argv){
         printf("------------------------------------\n");
         
         structTiempo = localtime(&tiempo);
-
+		
         //Se construye el mensaje de respuesta
         ///////////////////////////////////////////
         structRespuesta.ident = solicitud.ident;
         structRespuesta.dia = htonl((uint32_t) structTiempo->tm_mday);
         structRespuesta.mes = htonl((uint32_t) structTiempo->tm_mon);
-        structRespuesta.anyo = htonl((uint32_t) structTiempo->tm_year);
+        structRespuesta.anyo = htonl(((uint32_t) structTiempo->tm_year)-100+2000); //tm_year tiene el anyo mal
         structRespuesta.hora = htonl((uint32_t) structTiempo->tm_hour);
         structRespuesta.minuto = htonl((uint32_t) structTiempo->tm_min);
         //Si el cliente quiere salir o entrar
