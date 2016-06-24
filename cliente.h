@@ -14,6 +14,12 @@
 
 typedef struct {
 	uint32_t ident;
+    uint32_t precio;
+    uint32_t hora;
+    uint32_t minuto;
+    uint32_t dia;
+    uint32_t mes;
+    uint32_t anyo;
 	uint8_t accion;
 	uint8_t pad[3]; 
 	/* C incluye este espacio en la estructura como relleno por razones de

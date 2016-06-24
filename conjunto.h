@@ -10,5 +10,5 @@ struct conj {
 void inicializarConj(struct conj *conjunto, char *identificador, time_t tiempo);
 int insertarEnConj(struct conj *conjunto, char *identificador, time_t tiempo);
 void liberarConj(struct conj *conjunto);
-int eliminarEnConj(struct conj **conjunto, char *identificador);
+int eliminarEnConj(struct conj **conjunto, char *identificador, time_t *tiempoEstacionado);
 void imprimirConj(struct conj *conjunto);

@@ -99,7 +99,7 @@ void liberarConj(struct conj *conjunto){
  * @param identificador ID numérico del carro a eliminar del conjunto
  * @return 1 si el conjunto tenía el identificador que fue liberado. Es 0 de lo contrario.
  */
-int eliminarEnConj(struct conj **conjunto, char *identificador){
+int eliminarEnConj(struct conj **conjunto, char *identificador, time_t *tiempoEstacionado){
     struct conj *conjActual = *conjunto;
     struct conj *conjAnterior = NULL;
     struct conj *aux = *conjunto;
@@ -120,8 +120,9 @@ int eliminarEnConj(struct conj **conjunto, char *identificador){
                     aux = aux->siguiente;
                 }
                 
-                free(conjAnterior->elemento);
+                memcpy(tiempoEstacionado, &(conjAnterior->elemento->tiempo), sizeof(time_t));
                 free(conjAnterior->elemento->identificador);
+                free(conjAnterior->elemento);
                 free(conjAnterior);
                 if (conjActual){
                     aux->siguiente = conjActual;

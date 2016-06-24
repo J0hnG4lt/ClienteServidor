@@ -21,6 +21,21 @@
 //Se una un manejador para cerrar bien el server, pues se usará ctr-c
 void manejadorINTERRUPT(int num);
 
+uint32_t obtenerPrecio(time_t duracion){
+	uint32_t costo = 0;
+	if (duracion > 3600){
+		costo += 80;
+		duracion -= 3600;
+	}
+	
+	while(duracion > 0){
+		costo += 30;
+		duracion -= 3600;
+	}
+	
+	return costo;
+	
+}
 
 int main(int argc, char **argv){
     
@@ -42,13 +57,13 @@ int main(int argc, char **argv){
     //
     char accion; //Entrar o Salir del estacionamiento
     char *identificador = NULL; //ID del carro actual
-    char respuesta[LON_MAX_MENSAJE];
-    memset(respuesta, 0, LON_MAX_MENSAJE);
     int numPuestosOcupados = 0; //Número de puestos ocupados
+    
+    time_t *tiempoEstacionado = malloc(sizeof(time_t));
     
     struct conj *carros = NULL; //Conjunto de carros en el estacionamiento
     
-    char *separador = ";";
+    //char *separador = ";";
     //Separador de elementos del mensaje a enviar y recibir
     
     FILE *archivoBitacoraEntrada;
@@ -68,6 +83,8 @@ int main(int argc, char **argv){
     //Estructura para obtener el tiempo. Luego se pone en el mensaje de respuesta.
     time_t tiempo = time(NULL);
     char *tiempoString = asctime(localtime(&tiempo));
+    
+    struct tm *structTiempo = (struct tm *) malloc(sizeof(struct tm));
     
     //Se parsean los argumentos
     int opcn;
@@ -154,6 +171,7 @@ int main(int argc, char **argv){
     //Ya no se necesita
     freeaddrinfo(dirServ);
     mensaje solicitud;
+    mensaje structRespuesta;
     //Se repite por cada mensaje entrante
     while(1){
         
@@ -181,74 +199,90 @@ int main(int argc, char **argv){
         tiempo = time(NULL);
         tiempoString = asctime(localtime(&tiempo));
         tiempoString[strlen(tiempoString)-1] = '\0';
+
         
+        structTiempo = localtime(&tiempo);
+
         //Se construye el mensaje de respuesta
-        respuesta[0] = accion;
-        strcpy(&respuesta[1], identificador);
-        strncat(respuesta, separador, strlen(separador));
-        strncat(respuesta, tiempoString, strlen(tiempoString));
-        strncat(respuesta, separador, strlen(separador));
-        printf("Solicitud: %s\n", respuesta);
-        
+        ///////////////////////////////////////////
+        structRespuesta.ident = solicitud.ident;
+        structRespuesta.dia = htonl((uint32_t) structTiempo->tm_mday);
+        structRespuesta.mes = htonl((uint32_t) structTiempo->tm_mon);
+        structRespuesta.anyo = htonl((uint32_t) structTiempo->tm_year);
+        structRespuesta.hora = htonl((uint32_t) structTiempo->tm_hour);
+        structRespuesta.minuto = htonl((uint32_t) structTiempo->tm_min);
         //Si el cliente quiere salir o entrar
         if (accion == 'e'){
             
             
             if(carros == NULL){
                 carros = (struct conj *)malloc(sizeof(struct conj));
-                inicializarConj(carros, identificador, time(NULL));
+                inicializarConj(carros,identificador, time(NULL));
                 numPuestosOcupados++;
-                respuesta[0] = 's'; //Sí se puede ejecutar la acción
+                structRespuesta.accion = 's';//Sí se puede ejecutar la acción
                 
                 //Si quedan puestos y el carro no está ya en el conjunto
-            } else if ((numPuestosOcupados < NUM_MAX_PUESTOS) && (insertarEnConj(carros, identificador, time(NULL)) == 0)){
+            } else if ((numPuestosOcupados < NUM_MAX_PUESTOS) && (insertarEnConj(carros,identificador, time(NULL)) == 0)){
                 numPuestosOcupados++;
-                respuesta[0] = 's'; //Sí se puede ejecutar la acción
+                structRespuesta.accion = 's';//Sí se puede ejecutar la acción
             
             } else{
-                respuesta[0] = 'n'; //No se puede ejecutar la acción
+                structRespuesta.accion = 'n';//No se puede ejecutar la acción
+                
             }
             
+            structRespuesta.precio = htonl((uint32_t) 0);
+            
+            
             //Se registra la operación de entrada
-            fprintf(archivoBitacoraEntrada, "%s\n",respuesta);
+            fprintf(archivoBitacoraEntrada, "Entrada: %c. Identificador: %d. Tiempo: %s\n",
+            								structRespuesta.accion,
+            								*identificador,
+            								tiempoString);
             
             
         } else if (accion == 's'){
             
             //Si hay carros y el carro que va a salir está en el conjunto
-            if ((numPuestosOcupados > 0) && (eliminarEnConj(&carros, identificador)==1)){
+            if ((numPuestosOcupados > 0) && (eliminarEnConj(&carros,identificador,tiempoEstacionado)==1)){
                 numPuestosOcupados--;
-                respuesta[0] = 's'; //Sí se puede ejecutar la acción
+                structRespuesta.accion = 's';//Sí se puede ejecutar la acción
+                structRespuesta.precio = htonl(obtenerPrecio(tiempo - *tiempoEstacionado));
+                printf("PRECIO: %d\n", obtenerPrecio(tiempo-*tiempoEstacionado));
+                
             }
             else{
-                respuesta[0] = 'n'; //No se puede ejecutar la acción
+                structRespuesta.accion = 'n';//No se puede ejecutar la acción
             }
             
             //Se registra la operación de salida
-            fprintf(archivoBitacoraSalida, "%s\n",respuesta);
+            fprintf(archivoBitacoraEntrada, "Salida: %c. Identificador: %d. Tiempo: %s\n",
+            								structRespuesta.accion,
+            								*identificador,
+            								tiempoString);
         
         }
         printf("Puestos Ocupados: %d\n", numPuestosOcupados);
         
-        puts(respuesta);
+        //memcpy(respuesta, &structRespuesta, sizeof(structRespuesta));
+        
         //Se envía el mensaje de respuesta
         ssize_t numBytesEnviados = sendto(socketSrvdrClt, 
-                                        respuesta, 
-                                        strlen(respuesta) + 1,
+                                        &structRespuesta, 
+                                        (sizeof structRespuesta - sizeof structRespuesta.pad),
                                         0,
                                         (struct sockaddr *) &dirClnt, 
                                         tamanoSocket);
         
+        
         if (numBytesEnviados < 0){
-            fprintf(stderr,"Error al enviar respuesta.\n");
+            fprintf(stderr,"Error al enviar respuesta: %s.\n", strerror(errno));
             abort();
-        } else if (numBytesEnviados != strlen(respuesta) +1){
-            fprintf(stderr," No se envió el número correcto de bytes.\n");
         }
         
         imprimirConj(carros);
         
-        memset(respuesta, 0, LON_MAX_MENSAJE);        
+        
     }
     
     return 0;

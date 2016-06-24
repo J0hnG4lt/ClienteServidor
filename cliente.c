@@ -25,6 +25,7 @@ int main(int argc, char **argv){
     char *identificadorStr;
     
     mensaje msj; // mensaje que se enviará al servidor
+    mensaje structRespuesta;
     
     int opcn; //Se parsean los argumentos del cliente
               //optarg es una variable global con un apuntador al argumento actual
@@ -139,8 +140,8 @@ int main(int argc, char **argv){
                                     dirServ->ai_addr, 
                                     dirServ->ai_addrlen);
         
-        numBytesRecibidos = recvfrom(socketCltSrvdr, mensajeRecibido, 
-                                    LON_MAX_MENSAJE, 0,
+        numBytesRecibidos = recvfrom(socketCltSrvdr, &structRespuesta, 
+                                    sizeof structRespuesta - sizeof structRespuesta.pad, 0,
                                     (struct sockaddr *) &dirOrigenServ, 
                                     &tamanoSocket);
         
@@ -161,29 +162,48 @@ int main(int argc, char **argv){
         exit(EXIT_FAILURE);
     }
     
-    
+    /*
     //Respuestas del servidor
     char *separador =";";
     char permisoEntrar = mensajeRecibido[0];
     char *identificadorRcbd = strdup(strtok(&mensajeRecibido[1], separador));
     char *horaFecha = strdup(strtok(NULL, separador));
+    */
+    
+    char permisoEntrar = structRespuesta.accion;
+    int identificadorRcbd = ntohl(structRespuesta.ident);//(unsigned long) ntohl(structRespuesta.ident);
+    int dia = (int) ntohl(structRespuesta.dia);
+    int mes = (int) ntohl(structRespuesta.mes);
+    int anyo = (int) ntohl(structRespuesta.anyo);
+    int hora = (int) ntohl(structRespuesta.hora);
+    int minuto = (int) ntohl(structRespuesta.minuto);
+    int precio = (int) ntohl(structRespuesta.precio);
+    
+    printf("RESPUESTA SERVER: Permiso: %c, Identificador: %d, Hora: %d\n", permisoEntrar, identificadorRcbd, hora);
     
     //Se verifica que el identificador recibido corresponda al cliente actual
-    if (strcmp(identificadorRcbd, identificadorStr) != 0){
+    
+    printf("%d %lu\n", identificadorRcbd, identificador);
+    if (identificadorRcbd != identificador){
         fprintf(stderr," Respuesta recibida no corresponde al conductor.\n");
-        exit(EXIT_FAILURE);
+        abort();
     }
     
     
     mensajeRecibido[LON_MAX_MENSAJE] = '\0';
-    printf("Permiso: %c, Identificador: %s, Hora: %s\n", permisoEntrar, identificadorRcbd, horaFecha);
+    printf("Permiso: %c, Identificador: %d, Hora: %d\n", permisoEntrar, identificadorRcbd, hora);
     freeaddrinfo(dirServ);
     
     close(socketCltSrvdr);
-        
-    free(horaFecha);
-    free(identificadorRcbd);
     
-    printf("ID:%s, Puerto:%s, Accion:%c, Direccion:%s\n", identificadorStr, puerto, msj.accion, direccion);
+    //printf("Mensaje: %s\n", mensaje);
+    
+    //free(mensaje);
+    
+    //free(horaFecha);
+    //free(identificadorRcbd);
+    
+    //printf("ID:%s, Puerto:%s, Accion:%s, Direccion:%s\n", identificador, puerto,(char) permisoEntrar, direccion);
+    
     return 0;
 }
