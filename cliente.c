@@ -204,7 +204,11 @@ int main(int argc, char **argv){
     	printf("ID: %d\n", identificadorRcbd);
     	printf("Debe cancelar: Bs. %d\n", precio);
     	printf("---------------------------------\n");
+    	
     } else if ((msj.accion == 's') && (permiso == 'n')){
+    	printf("¡Identidad falsa!\n");
+    	
+    } else if ((msj.accion == 'e') && (permiso == 'f')){
     	printf("¡Identidad falsa!\n");
     }
     

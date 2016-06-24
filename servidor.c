@@ -234,7 +234,7 @@ int main(int argc, char **argv){
                 structRespuesta.accion = 's';//Sí se puede ejecutar la acción
             
             } else{
-                structRespuesta.accion = 'n';//No se puede ejecutar la acción
+                structRespuesta.accion = 'f';//No se puede ejecutar la acción
                 
             }
             
