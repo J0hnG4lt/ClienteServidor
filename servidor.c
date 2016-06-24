@@ -195,12 +195,12 @@ int main(int argc, char **argv){
             
             if(carros == NULL){
                 carros = (struct conj *)malloc(sizeof(struct conj));
-                inicializarConj(carros, identificador);
+                inicializarConj(carros, identificador, time(NULL));
                 numPuestosOcupados++;
                 respuesta[0] = 's'; //Sí se puede ejecutar la acción
                 
                 //Si quedan puestos y el carro no está ya en el conjunto
-            } else if ((numPuestosOcupados < NUM_MAX_PUESTOS) && (insertarEnConj(carros, identificador) == 0)){
+            } else if ((numPuestosOcupados < NUM_MAX_PUESTOS) && (insertarEnConj(carros, identificador, time(NULL)) == 0)){
                 numPuestosOcupados++;
                 respuesta[0] = 's'; //Sí se puede ejecutar la acción
             

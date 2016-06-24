@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <errno.h>
+#include <time.h>
 
 // Autores: Georvic Tur           12-11402
 //          Alfredo Fanghella     12-10967
@@ -13,6 +14,7 @@
 //Se usa una lista enlazada para implementar un conjunto de identificadores
 struct nodo {
     char *identificador;
+    time_t tiempo;
 };
 
 struct conj {
@@ -27,10 +29,11 @@ struct conj {
  * @param identificador ID numérico del carro
  * 
  */
-void inicializarConj(struct conj *conjunto, char *identificador){
+void inicializarConj(struct conj *conjunto, char *identificador, time_t tiempo){
     conjunto->siguiente = NULL;
     struct nodo *nuevoNodo = (struct nodo *)malloc(sizeof(struct nodo));
     nuevoNodo->identificador = identificador;
+    nuevoNodo->tiempo = tiempo;
     conjunto->elemento = nuevoNodo;
 }
 
@@ -43,7 +46,7 @@ void inicializarConj(struct conj *conjunto, char *identificador){
  * @param identificador ID numérico del carro
  * @return 0 si el conjunto no tenía ya el identificador. Es 1 de lo contrario.
  */
-int insertarEnConj(struct conj *conjunto, char *identificador){
+int insertarEnConj(struct conj *conjunto, char *identificador, time_t tiempo){
     struct conj *conjActual = conjunto;
     struct conj *conjAnterior = NULL;
     int encontrado = 0;
@@ -61,6 +64,7 @@ int insertarEnConj(struct conj *conjunto, char *identificador){
         conjActual = (struct conj *)malloc(sizeof(struct conj));
         struct nodo *nuevoNodo = (struct nodo *)malloc(sizeof(struct nodo));
         nuevoNodo->identificador = identificador;
+        nuevoNodo->tiempo = tiempo;
         conjActual->elemento = nuevoNodo;
         conjAnterior->siguiente = conjActual;
         conjActual->siguiente = NULL;
@@ -155,7 +159,7 @@ void imprimirConj(struct conj *conjunto){
         conjAnterior = conjActual;
         conjActual = conjActual->siguiente;
         if (conjAnterior->elemento){
-            printf("Elemento de Conj %s\n", conjAnterior->elemento->identificador);
+            printf("Elemento de Conj %s. Tiempo: %f\n", conjAnterior->elemento->identificador, (double) conjAnterior->elemento->tiempo);
         }
     }
 }
@@ -171,10 +175,10 @@ int main(int argc, char **argv){
     *carroID2 = '2';
     *carroID3 = '3';
     *carroID4 = '4';
-    inicializarConj(carros, carroID1);
-    insertarEnConj(carros, carroID2);
-    insertarEnConj(carros, carroID3);
-    insertarEnConj(carros, carroID4);
+    inicializarConj(carros, carroID1, time(NULL));
+    insertarEnConj(carros, carroID2,time(NULL));
+    insertarEnConj(carros, carroID3,time(NULL));
+    insertarEnConj(carros, carroID4, time(NULL));
     imprimirConj(carros);
     if (eliminarEnConj(&carros, carroID4)){
         printf("Liberado\n");

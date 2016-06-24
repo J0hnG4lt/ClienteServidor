@@ -8,6 +8,7 @@ FLAGS = -Wall
 endif
 
 all : cliente servidor
+	
 
 cliente : cliente.c configuracion.h
 	gcc $(FLAGS) cliente.c configuracion.h -o cliente
