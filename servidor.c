@@ -79,7 +79,7 @@ int main(int argc, char **argv){
     time_t tiempo = time(NULL);
     char *tiempoString = asctime(localtime(&tiempo));
     
-    struct tm *structTiempo = (struct tm *) malloc(sizeof(struct tm));
+    struct tm *structTiempo;
     
     // Variables para chequeo de la entrada
     bool flag_i, flag_l, flag_o;
