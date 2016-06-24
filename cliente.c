@@ -8,13 +8,14 @@
 #define MAX_PUERTO 65535
 int main(int argc, char **argv){
     
+    char uso_correcto[] ="\tsem_cli -d <dirección IP o nombre de dominio>\n\t\
+	-p <puerto>\n\t\
+	-c <acción>\n\t\
+	-i <identificador de vehículo>\n";
+    
     if (argc != 9){
         fprintf(stderr,"Número incorrecto de argumentos.\nUso correcto:\n");
-        fprintf(stderr,"\tsem_cli \
-                -d <dirección IP o nombre de dominio>\n \t\t\
-                -p <puerto>\n \t\t\
-                -c <acción>\n \t\t\
-                -i <identificador de vehículo>\n");
+        fprintf(stderr, uso_correcto);
         exit(EXIT_FAILURE);
     }
     
@@ -23,22 +24,22 @@ int main(int argc, char **argv){
     char *puerto = NULL; //Número de Puerto
     unsigned long identificador;
     
-    
     mensaje msj; // mensaje que se enviará al servidor
     mensaje structRespuesta;
     
     int opcn; //Se parsean los argumentos del cliente
               //optarg es una variable global con un apuntador al argumento actual
+    
+    // Variables para el chequeo de la entrada
     char * err;
 	long numPuerto;
+	bool flag_i, flag_d, flag_p, flag_c;
+    flag_i = flag_d = flag_p = flag_c = false;
     while ((opcn = getopt(argc,argv, "d:p:c:i:")) != -1){
         switch(opcn){
             case 'd':
-                if (LON_MAX_DIR < strlen(optarg)){
-                    fprintf(stderr,"Longitud máxima de dirección sobrepasada.\n");
-                    exit(EXIT_FAILURE);
-                }
                 direccion = optarg;
+                flag_d = true;
                 break;
             case 'p':
 				numPuerto = strtol(optarg, &err, 10);
@@ -47,6 +48,7 @@ int main(int argc, char **argv){
 					exit(EXIT_FAILURE);
 				}
                 puerto = optarg;
+                flag_p = true;
                 break;
             case 'c':
                 if ((strlen(optarg) != 1) || ((*optarg != 'e') && (*optarg != 's'))){
@@ -54,6 +56,7 @@ int main(int argc, char **argv){
                     exit(EXIT_FAILURE);
                 }
                 msj.accion = *optarg;
+                flag_c = true;
                 break;
             case 'i':
                 if (optarg[0] == '-'){
@@ -70,13 +73,18 @@ int main(int argc, char **argv){
                     exit(EXIT_FAILURE);
                 }
                 msj.ident = htonl(identificador);
-                
+                flag_i = true;
                 break;
-             
-             default:
+            default:
+				fprintf(stderr,"Formato de argumentos incorrecto.\nUso correcto:\n");
+				fprintf(stderr, uso_correcto);
                 exit(EXIT_FAILURE);
         }
-        
+    }
+    
+    if (!(flag_d && flag_c && flag_i && flag_p)) {
+		fprintf(stderr,"Formato de argumentos incorrecto.\nUso correcto:\n");
+		fprintf(stderr, uso_correcto);
     }
     
     //El tipo de socket a usar (UDP)
