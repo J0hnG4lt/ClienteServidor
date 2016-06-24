@@ -5,13 +5,13 @@
 //          Alfredo Fanghella     12-10967
 
 //Constantes definidas en el archivo de configuración
-#define MAX_PUERTO 65535
+
 int main(int argc, char **argv){
     
-    char uso_correcto[] ="\tsem_cli -d <dirección IP o nombre de dominio>\n\t\
-	-p <puerto>\n\t\
-	-c <acción>\n\t\
-	-i <identificador de vehículo>\n";
+    char uso_correcto[] ="sem_cli -d <dirección IP o nombre de dominio>\n\t\
+-p <puerto>\n\t\
+-c <acción>\n\t\
+-i <identificador de vehículo>\n";
     
     if (argc != 9){
         fprintf(stderr,"Número incorrecto de argumentos.\nUso correcto:\n");

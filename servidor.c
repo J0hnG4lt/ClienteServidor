@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -22,30 +23,21 @@
 void manejadorINTERRUPT(int num);
 
 uint32_t obtenerPrecio(time_t duracion){
-	uint32_t costo = 0;
-	if (duracion > 3600){
-		costo += 80;
-		duracion -= 3600;
-	}
-	
-	while(duracion > 0){
-		costo += 30;
-		duracion -= 3600;
-	}
-	
-	return costo;
-	
+	int horas = duracion / 3600;
+	if (duracion % 3600 != 0)
+		horas++;
+	return 80 + 30*(horas - 1);
 }
 
 int main(int argc, char **argv){
     
+    char uso_correcto[] = "sem_svr\n\t-l <puerto a servir>\n\t\
+-i <bitácora de entrada>\n\t\
+-o <bitácora de salida>\n";
     
     if (argc != 7){
         fprintf(stderr,"Número incorrecto de argumentos.\nUso correcto:\n");
-        fprintf(stderr,"\tsem_svr \
-                          -l <puerto a servir>\n \t\t\
-                          -i <bitácora de entrada>\n \t\t\
-                          -o <bitácora de salida>\n");
+        fprintf(stderr, uso_correcto);
         exit(EXIT_FAILURE);
     }
     
@@ -89,39 +81,43 @@ int main(int argc, char **argv){
     
     struct tm *structTiempo = (struct tm *) malloc(sizeof(struct tm));
     
+    // Variables para chequeo de la entrada
+    bool flag_i, flag_l, flag_o;
+    flag_i = flag_l = flag_o = 0;
+    char *err;
+    long numPuerto;
+    
     //Se parsean los argumentos
     int opcn;
     while ((opcn = getopt(argc,argv, "l:i:o:")) != -1){
         switch(opcn){
             case 'i':
-                if (LON_MAX_STRNG < strlen(optarg)){
-                    fprintf(stderr,"Bitácora de Entrada: Longitud máxima de nombre sobrepasada.\n");
-                    exit(EXIT_FAILURE);
-                }
                 bitacoraEntrada = optarg;
+                flag_i = true;
                 break;
              case 'l':
-                if (strlen(optarg) != 4){
-                    fprintf(stderr,"Número de puerto de tamaño equivocado.\n");
-                    exit(EXIT_FAILURE);
-                } else if (!atoi(optarg)){ //Se usa atoi para determinar si es un número
-                    fprintf(stderr,"El puerto ha de ser un número.\n");
-                    exit(EXIT_FAILURE);
-                }
-                
+				numPuerto = strtol(optarg, &err, 10);
+				if ((*err != '\0') || (numPuerto < 1) || (numPuerto > MAX_PUERTO)) {
+					fprintf(stderr, "El puerto no es válido\n");
+					exit(EXIT_FAILURE);
+				}
                 puerto = optarg;
+                flag_l = true;
                 break;
              case 'o':
-                 if (LON_MAX_STRNG < strlen(optarg)){
-                     fprintf(stderr,"Bitácora de Salida: Longitud máxima de nombre sobrepasada.\n");
-                     exit(EXIT_FAILURE);
-                 }
                  bitacoraSalida = optarg;
+                 flag_o = true;
                  break;
-                
-             default:
+            default:
+				fprintf(stderr,"Formato de argumentos incorrecto.\nUso correcto:\n");
+				fprintf(stderr, uso_correcto);
                 exit(EXIT_FAILURE);
         }
+    }
+    
+    if (!(flag_o && flag_l && flag_i)) {
+		fprintf(stderr,"Formato de argumentos incorrecto.\nUso correcto:\n");
+		fprintf(stderr, uso_correcto);
     }
     
     printf("-------------------------------------------\n");
