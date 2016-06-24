@@ -68,7 +68,7 @@ int main(int argc, char **argv){
                     fprintf(stderr,"El número de identificación es demasiado grande.\n");
                     exit(EXIT_FAILURE);
                 }
-                msj.ident = identificador;
+                msj.ident = htonl(identificador);
                 identificadorStr = optarg;
                 break;
              

@@ -175,7 +175,7 @@ int main(int argc, char **argv){
         //Se parsea el mensaje de llegada
         accion = solicitud.accion;
         identificador = malloc(20);
-        sprintf(identificador, "%d", solicitud.ident);
+        sprintf(identificador, "%d", ntohl(solicitud.ident));
         
         //Se obtiene el tiempo actual
         tiempo = time(NULL);
@@ -242,7 +242,7 @@ int main(int argc, char **argv){
         if (numBytesEnviados < 0){
             fprintf(stderr,"Error al enviar respuesta.\n");
             abort();
-        } else if (numBytesEnviados != numBytesRecibidos){
+        } else if (numBytesEnviados != strlen(respuesta) +1){
             fprintf(stderr," No se envió el número correcto de bytes.\n");
         }
         
