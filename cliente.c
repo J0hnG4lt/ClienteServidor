@@ -186,7 +186,7 @@ int main(int argc, char **argv){
     printf("%d %lu\n", identificadorRcbd, identificador);
     if (identificadorRcbd != identificador){
         fprintf(stderr," Respuesta recibida no corresponde al conductor.\n");
-        abort();
+        exit(EXIT_FAILURE);
     }
     
     

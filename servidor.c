@@ -46,7 +46,7 @@ int main(int argc, char **argv){
                           -l <puerto a servir>\n \t\t\
                           -i <bitácora de entrada>\n \t\t\
                           -o <bitácora de salida>\n");
-        abort();
+        exit(EXIT_FAILURE);
     }
     
     //Argumentos del servidor
@@ -93,17 +93,17 @@ int main(int argc, char **argv){
             case 'i':
                 if (LON_MAX_STRNG < strlen(optarg)){
                     fprintf(stderr,"Bitácora de Entrada: Longitud máxima de nombre sobrepasada.\n");
-                    abort();
+                    exit(EXIT_FAILURE);
                 }
                 bitacoraEntrada = optarg;
                 break;
              case 'l':
                 if (strlen(optarg) != 4){
                     fprintf(stderr,"Número de puerto de tamaño equivocado.\n");
-                    abort();
+                    exit(EXIT_FAILURE);
                 } else if (!atoi(optarg)){ //Se usa atoi para determinar si es un número
                     fprintf(stderr,"El puerto ha de ser un número.\n");
-                    abort();
+                    exit(EXIT_FAILURE);
                 }
                 
                 puerto = optarg;
@@ -111,13 +111,13 @@ int main(int argc, char **argv){
              case 'o':
                  if (LON_MAX_STRNG < strlen(optarg)){
                      fprintf(stderr,"Bitácora de Salida: Longitud máxima de nombre sobrepasada.\n");
-                     abort();
+                     exit(EXIT_FAILURE);
                  }
                  bitacoraSalida = optarg;
                  break;
                 
              default:
-                abort();
+                exit(EXIT_FAILURE);
         }
     }
     
@@ -152,20 +152,20 @@ int main(int argc, char **argv){
     if ((codigoErr = getaddrinfo(NULL, puerto, &infoDir, &dirServ)) != 0){
         fprintf(stderr," Problema al obtener información sobre el servidor.\n");
         gai_strerror(codigoErr);
-        abort();
+        exit(EXIT_FAILURE);
     }
     
     //Creación del socket
     int socketSrvdrClt = socket(dirServ->ai_family, dirServ->ai_socktype, dirServ->ai_protocol);
     if (!socketSrvdrClt){
         fprintf(stderr," Problema al crear el socket.\n");
-        abort();
+        exit(EXIT_FAILURE);
     }
     
     //Se enlaza el socket
     if (bind(socketSrvdrClt, dirServ->ai_addr, dirServ->ai_addrlen) != 0){
         fprintf(stderr,"No se pudo enlazar el socket.\n");
-        abort();
+        exit(EXIT_FAILURE);
     }
     
     //Ya no se necesita
@@ -187,7 +187,7 @@ int main(int argc, char **argv){
         
         if (!numBytesRecibidos){
             fprintf(stderr,"Error al recibir solicitud.\n");
-            abort();
+            exit(EXIT_FAILURE);
         }
         
         //Se parsea el mensaje de llegada
@@ -235,9 +235,9 @@ int main(int argc, char **argv){
             
             
             //Se registra la operación de entrada
-            fprintf(archivoBitacoraEntrada, "Entrada: %c. Identificador: %d. Tiempo: %s\n",
+            fprintf(archivoBitacoraEntrada, "Entrada: %c. Identificador: %s. Tiempo: %s\n",
             								structRespuesta.accion,
-            								*identificador,
+            								identificador,
             								tiempoString);
             
             
@@ -256,9 +256,9 @@ int main(int argc, char **argv){
             }
             
             //Se registra la operación de salida
-            fprintf(archivoBitacoraEntrada, "Salida: %c. Identificador: %d. Tiempo: %s\n",
+            fprintf(archivoBitacoraSalida, "Salida: %c. Identificador: %s. Tiempo: %s\n",
             								structRespuesta.accion,
-            								*identificador,
+            								identificador,
             								tiempoString);
         
         }
@@ -277,7 +277,7 @@ int main(int argc, char **argv){
         
         if (numBytesEnviados < 0){
             fprintf(stderr,"Error al enviar respuesta: %s.\n", strerror(errno));
-            abort();
+            exit(EXIT_FAILURE);
         }
         
         imprimirConj(carros);
