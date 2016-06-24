@@ -22,7 +22,7 @@ int main(int argc, char **argv){
     char *direccion = NULL; //Nombre de dominio o IP
     char *puerto = NULL; //Número de Puerto
     unsigned long identificador;
-    char *identificadorStr;
+    
     
     mensaje msj; // mensaje que se enviará al servidor
     mensaje structRespuesta;
@@ -70,7 +70,7 @@ int main(int argc, char **argv){
                     exit(EXIT_FAILURE);
                 }
                 msj.ident = htonl(identificador);
-                identificadorStr = optarg;
+                
                 break;
              
              default:
@@ -125,7 +125,6 @@ int main(int argc, char **argv){
     
     ssize_t numBytesEnviados=-1;
     struct sockaddr_storage dirOrigenServ;
-    char mensajeRecibido[LON_MAX_MENSAJE + 1];
     socklen_t tamanoSocket = sizeof(dirOrigenServ);
     ssize_t numBytesRecibidos = 0;
     int i=0;
@@ -162,15 +161,8 @@ int main(int argc, char **argv){
         exit(EXIT_FAILURE);
     }
     
-    /*
-    //Respuestas del servidor
-    char *separador =";";
-    char permisoEntrar = mensajeRecibido[0];
-    char *identificadorRcbd = strdup(strtok(&mensajeRecibido[1], separador));
-    char *horaFecha = strdup(strtok(NULL, separador));
-    */
     
-    char permisoEntrar = structRespuesta.accion;
+    char permiso = structRespuesta.accion;
     int identificadorRcbd = ntohl(structRespuesta.ident);//(unsigned long) ntohl(structRespuesta.ident);
     int dia = (int) ntohl(structRespuesta.dia);
     int mes = (int) ntohl(structRespuesta.mes);
@@ -179,31 +171,40 @@ int main(int argc, char **argv){
     int minuto = (int) ntohl(structRespuesta.minuto);
     int precio = (int) ntohl(structRespuesta.precio);
     
-    printf("RESPUESTA SERVER: Permiso: %c, Identificador: %d, Hora: %d\n", permisoEntrar, identificadorRcbd, hora);
+    
     
     //Se verifica que el identificador recibido corresponda al cliente actual
     
-    printf("%d %lu\n", identificadorRcbd, identificador);
     if (identificadorRcbd != identificador){
         fprintf(stderr," Respuesta recibida no corresponde al conductor.\n");
         exit(EXIT_FAILURE);
     }
     
+    if ((msj.accion == 'e') && (permiso == 's')){
+    	printf("Puede Pasar\n");
+    	printf("-----------Ticket---------\n");
+    	printf("ID: %d\n", identificadorRcbd);
+    	printf("Hora: %d:%d\n", hora, minuto);
+    	printf("Fecha: %d/%d/%d\n", dia,mes,anyo);
+    	printf("---------------------------\n");
+    	
+    } else if ((msj.accion == 'e') && (permiso == 'n')){
+    	printf("En este momento no hay puestos\n");
+    	
+    } else if ((msj.accion == 's') && (permiso == 's')){
+    	printf("---------------------------------\n");
+    	printf("ID: %d\n", identificadorRcbd);
+    	printf("Debe cancelar: Bs. %d\n", precio);
+    	printf("---------------------------------\n");
+    } else if ((msj.accion == 's') && (permiso == 'n')){
+    	printf("¡Identidad falsa!\n");
+    }
     
-    mensajeRecibido[LON_MAX_MENSAJE] = '\0';
-    printf("Permiso: %c, Identificador: %d, Hora: %d\n", permisoEntrar, identificadorRcbd, hora);
+
     freeaddrinfo(dirServ);
     
     close(socketCltSrvdr);
     
-    //printf("Mensaje: %s\n", mensaje);
-    
-    //free(mensaje);
-    
-    //free(horaFecha);
-    //free(identificadorRcbd);
-    
-    //printf("ID:%s, Puerto:%s, Accion:%s, Direccion:%s\n", identificador, puerto,(char) permisoEntrar, direccion);
     
     return 0;
 }
