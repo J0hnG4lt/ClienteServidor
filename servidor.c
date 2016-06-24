@@ -18,8 +18,9 @@
 
 
 //Variables Globales
-FILE *archivoBitacoraEntrada;
-FILE *archivoBitacoraSalida;
+FILE *archivoBitacoraEntrada = NULL;
+FILE *archivoBitacoraSalida = NULL;
+time_t *tiempoEstacionado = NULL;
 struct conj *carros = NULL; //Conjunto de carros en el estacionamiento
 
 
@@ -27,6 +28,7 @@ struct conj *carros = NULL; //Conjunto de carros en el estacionamiento
 void manejadorINTERRUPT(int num){
     fclose(archivoBitacoraEntrada);
     fclose(archivoBitacoraSalida);
+    free(tiempoEstacionado);
     liberarConj(carros);
     printf("\n----------------\n");
     printf("Servidor apagado\n");
@@ -64,13 +66,7 @@ int main(int argc, char **argv){
     char *identificador = NULL; //ID del carro actual
     int numPuestosOcupados = 0; //Número de puestos ocupados
     
-    time_t *tiempoEstacionado = malloc(sizeof(time_t));
-    
-    
-    //char *separador = ";";
-    //Separador de elementos del mensaje a enviar y recibir
-    
-
+    tiempoEstacionado = malloc(sizeof(time_t));
     
 
     //Se registra el manejador
@@ -173,8 +169,8 @@ int main(int argc, char **argv){
     
     //Ya no se necesita
     freeaddrinfo(dirServ);
-    mensaje solicitud;
-    mensaje structRespuesta;
+    mensaje_c solicitud;
+    mensaje_s structRespuesta;
     //Se repite por cada mensaje entrante
     while(1){
         

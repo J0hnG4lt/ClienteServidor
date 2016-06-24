@@ -24,8 +24,8 @@ int main(int argc, char **argv){
     char *puerto = NULL; //Número de Puerto
     unsigned long identificador;
     
-    mensaje msj; // mensaje que se enviará al servidor
-    mensaje structRespuesta;
+    mensaje_c msj; // mensaje que se enviará al servidor
+    mensaje_s structRespuesta;
     
     int opcn; //Se parsean los argumentos del cliente
               //optarg es una variable global con un apuntador al argumento actual

@@ -11,7 +11,10 @@
 // Autores: Georvic Tur           12-11402
 //          Alfredo Fanghella     12-10967
 
+
+
 //Se usa una lista enlazada para implementar un conjunto de identificadores
+// con tiempo de llegada en segundos desde epoch
 struct nodo {
     char *identificador;
     time_t tiempo;
@@ -27,7 +30,7 @@ struct conj {
  *
  * @param conjunto Conjunto vacío cuya memoria ya ha sido asignada
  * @param identificador ID numérico del carro
- * 
+ * @param tiempo Tiempo de llegada medido en segundos desde epoch
  */
 void inicializarConj(struct conj *conjunto, char *identificador, time_t tiempo){
     conjunto->siguiente = NULL;
@@ -44,6 +47,7 @@ void inicializarConj(struct conj *conjunto, char *identificador, time_t tiempo){
  *
  * @param conjunto Conjunto que ya ha sido inicializado
  * @param identificador ID numérico del carro
+ * @param tiempo Tiempo de llegada medido en segundos desde epoch
  * @return 0 si el conjunto no tenía ya el identificador. Es 1 de lo contrario.
  */
 int insertarEnConj(struct conj *conjunto, char *identificador, time_t tiempo){
@@ -97,6 +101,7 @@ void liberarConj(struct conj *conjunto){
  * 
  * @param conjunto Conjunto que ya ha sido inicializado
  * @param identificador ID numérico del carro a eliminar del conjunto
+ * @param tiempoEstacionado Apuntador al tiempo de llegada medido en segundos desde epoch
  * @return 1 si el conjunto tenía el identificador que fue liberado. Es 0 de lo contrario.
  */
 int eliminarEnConj(struct conj **conjunto, char *identificador, time_t *tiempoEstacionado){
@@ -165,29 +170,4 @@ void imprimirConj(struct conj *conjunto){
     }
 }
 
-/*
-int main(int argc, char **argv){
-    struct conj *carros = (struct conj *)malloc(sizeof(struct conj));
-    char *carroID1 = malloc(sizeof(char));
-    char *carroID2 = malloc(sizeof(char));
-    char *carroID3 = malloc(sizeof(char));
-    char *carroID4 = malloc(sizeof(char));
-    *carroID1 = '1';
-    *carroID2 = '2';
-    *carroID3 = '3';
-    *carroID4 = '4';
-    inicializarConj(carros, carroID1, time(NULL));
-    insertarEnConj(carros, carroID2,time(NULL));
-    insertarEnConj(carros, carroID3,time(NULL));
-    insertarEnConj(carros, carroID4, time(NULL));
-    imprimirConj(carros);
-    if (eliminarEnConj(&carros, carroID4)){
-        printf("Liberado\n");
-    }else{
-        printf("No Liberado\n");
-    }
-    imprimirConj(carros);
-    liberarConj(carros);
-    return 0;
-}
-*/
+
