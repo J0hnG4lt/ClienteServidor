@@ -209,11 +209,11 @@ int main(int argc, char **argv){
         //Se construye el mensaje de respuesta
         ///////////////////////////////////////////
         structRespuesta.ident = solicitud.ident;
-        structRespuesta.dia = htonl((uint32_t) structTiempo->tm_mday);
-        structRespuesta.mes = htonl((uint32_t) structTiempo->tm_mon);
-        structRespuesta.anyo = htonl(((uint32_t) structTiempo->tm_year)-100+2000); //tm_year tiene el anyo mal
-        structRespuesta.hora = htonl((uint32_t) structTiempo->tm_hour);
-        structRespuesta.minuto = htonl((uint32_t) structTiempo->tm_min);
+        structRespuesta.dia = ((uint32_t) structTiempo->tm_mday);
+        structRespuesta.mes = ((uint32_t) structTiempo->tm_mon);
+        structRespuesta.anyo = (((uint32_t) structTiempo->tm_year)); //tm_year tiene el anyo mal
+        structRespuesta.hora = ((uint32_t) structTiempo->tm_hour);
+        structRespuesta.minuto = ((uint32_t) structTiempo->tm_min);
         //Si el cliente quiere salir o entrar
         if (accion == 'e'){
             

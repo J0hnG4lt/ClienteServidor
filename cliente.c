@@ -113,6 +113,7 @@ int main(int argc, char **argv){
     }
     
     
+    
     //Estructura para establecer el timeout de la espera por la respuesta
     //del servidor.
     struct timeval tiempoEsperaMax;
@@ -172,11 +173,11 @@ int main(int argc, char **argv){
     
     char permiso = structRespuesta.accion;
     int identificadorRcbd = ntohl(structRespuesta.ident);//(unsigned long) ntohl(structRespuesta.ident);
-    int dia = (int) ntohl(structRespuesta.dia);
-    int mes = (int) ntohl(structRespuesta.mes);
-    int anyo = (int) ntohl(structRespuesta.anyo);
-    int hora = (int) ntohl(structRespuesta.hora);
-    int minuto = (int) ntohl(structRespuesta.minuto);
+    int dia = (int) (structRespuesta.dia);
+    int mes = (int) (structRespuesta.mes);
+    int anyo = ((int) (structRespuesta.anyo))-100+2000;
+    int hora = (int) (structRespuesta.hora);
+    int minuto = (int) (structRespuesta.minuto);
     int precio = (int) ntohl(structRespuesta.precio);
     
     
