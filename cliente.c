@@ -1,13 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <errno.h>
-#include <time.h>
 #include "configuracion.h"
+#include "cliente.h"
 
 // Autores: Georvic Tur           12-11402
 //          Alfredo Fanghella     12-10967
@@ -23,14 +15,16 @@ int main(int argc, char **argv){
                 -p <puerto>\n \t\t\
                 -c <acción>\n \t\t\
                 -i <identificador de vehículo>\n");
-        abort();
+        exit(EXIT_FAILURE);
     }
     
     //Argumentos del cliente
-    char *direccion=NULL; //Nombre de dominio o IP
-    char *puerto=NULL; //Número de Puerto
-    char *accion=NULL; //Entrada o Salida
-    char *identificador=NULL; //ID del carro
+    char *direccion = NULL; //Nombre de dominio o IP
+    char *puerto = NULL; //Número de Puerto
+    unsigned long identificador;
+    char *identificadorStr;
+    
+    mensaje msj; // mensaje que se enviará al servidor
     
     int opcn; //Se parsean los argumentos del cliente
               //optarg es una variable global con un apuntador al argumento actual
@@ -41,46 +35,48 @@ int main(int argc, char **argv){
             case 'd':
                 if (LON_MAX_DIR < strlen(optarg)){
                     fprintf(stderr,"Longitud máxima de dirección sobrepasada.\n");
-                    abort();
+                    exit(EXIT_FAILURE);
                 }
                 direccion = optarg;
                 break;
-             case 'p':
+            case 'p':
 				numPuerto = strtol(optarg, &err, 10);
 				if ((*err != '\0') || (numPuerto < 1) || (numPuerto > MAX_PUERTO)) {
 					fprintf(stderr, "El puerto no es válido\n");
-					abort();
+					exit(EXIT_FAILURE);
 				}
                 puerto = optarg;
                 break;
-             case 'c':
-                if ((*optarg != 'e') && (*optarg != 's')){
+            case 'c':
+                if ((strlen(optarg) != 1) || ((*optarg != 'e') && (*optarg != 's'))){
                     fprintf(stderr,"Tipo de acción equivocada. Debe ser 'e' para entrada o 's' para salida\n");
-                    abort();
+                    exit(EXIT_FAILURE);
                 }
-                accion = optarg;
+                msj.accion = *optarg;
                 break;
-             case 'i':
-                if (strlen(optarg) > LON_MAX_ID){
-                    fprintf(stderr,"Longitud máxima de identificador sobrepasada.\n");
-                    abort();
-                } else if (!atoi(optarg)){
-                    fprintf(stderr,"El identificador ha de ser un número.\n");
-                    abort();
+            case 'i':
+                if (optarg[0] == '-'){
+                    fprintf(stderr,"El identificador debe ser un número positivo.\n");
+                    exit(EXIT_FAILURE);
+                } 
+                errno = 0;
+                identificador = strtoul(optarg, &err, 10);
+                if (*err!= '\0') {
+					fprintf(stderr,"El número de identificación no es válido.\n");
+					exit(EXIT_FAILURE);
+				} else if ((errno == ERANGE) || (identificador > UINT32_MAX)){
+                    fprintf(stderr,"El número de identificación es demasiado grande.\n");
+                    exit(EXIT_FAILURE);
                 }
-                identificador = optarg;
+                msj.ident = identificador;
+                identificadorStr = optarg;
                 break;
              
              default:
-                abort();
+                exit(EXIT_FAILURE);
         }
         
     }
-    
-    //El mensaje tiene la acción (Entrar o Salir) y el ID del carro
-    char *mensaje = malloc(strlen(accion)+strlen(identificador)+1);
-    mensaje[0] = *accion;
-    strcpy(&mensaje[1], identificador);
     
     //El tipo de socket a usar (UDP)
     struct addrinfo infoDir;
@@ -96,7 +92,7 @@ int main(int argc, char **argv){
     if ((codigoErr=getaddrinfo(direccion, puerto, &infoDir, &dirServ)) != 0){
         fprintf(stderr," Problema al obtener información sobre el servidor.\n");
         gai_strerror(codigoErr);
-        abort();
+        exit(EXIT_FAILURE);
     }
     
     
@@ -104,7 +100,7 @@ int main(int argc, char **argv){
     int socketCltSrvdr = socket(dirServ->ai_family, dirServ->ai_socktype, dirServ->ai_protocol);
     if (socketCltSrvdr == -1){
         fprintf(stderr," Problema al crear el socket.\n");
-        abort();
+        exit(EXIT_FAILURE);
     }
     
     
@@ -122,7 +118,7 @@ int main(int argc, char **argv){
                     sizeof(tiempoEsperaMax))){
         
         fprintf(stderr," Problema al establecer tiempo máximo de espera\n");
-        abort();
+        exit(EXIT_FAILURE);
     }
     
     
@@ -137,8 +133,8 @@ int main(int argc, char **argv){
     while((i < NUM_INTENTOS) && ((numBytesEnviados==-1) || (numBytesRecibidos < 0))){
         
         numBytesEnviados = sendto(socketCltSrvdr, 
-                                    mensaje, 
-                                    LON_MAX_MENSAJE, 
+                                    &msj, 
+                                    sizeof msj - sizeof msj.pad, 
                                     0, 
                                     dirServ->ai_addr, 
                                     dirServ->ai_addrlen);
@@ -162,7 +158,7 @@ int main(int argc, char **argv){
     
     if (i==NUM_INTENTOS){
         fprintf(stderr,"Tiempo de respuesta agotado.\n");
-        abort();
+        exit(EXIT_FAILURE);
     }
     
     
@@ -173,9 +169,9 @@ int main(int argc, char **argv){
     char *horaFecha = strdup(strtok(NULL, separador));
     
     //Se verifica que el identificador recibido corresponda al cliente actual
-    if (strcmp(identificadorRcbd, identificador) != 0){
+    if (strcmp(identificadorRcbd, identificadorStr) != 0){
         fprintf(stderr," Respuesta recibida no corresponde al conductor.\n");
-        abort();
+        exit(EXIT_FAILURE);
     }
     
     
@@ -184,15 +180,10 @@ int main(int argc, char **argv){
     freeaddrinfo(dirServ);
     
     close(socketCltSrvdr);
-    
-    printf("Mensaje: %s\n", mensaje);
-    
-    free(mensaje);
-    
+        
     free(horaFecha);
     free(identificadorRcbd);
     
-    printf("ID:%s, Puerto:%s, Accion:%s, Direccion:%s\n", identificador, puerto, accion, direccion);
-    
+    printf("ID:%s, Puerto:%s, Accion:%c, Direccion:%s\n", identificadorStr, puerto, msj.accion, direccion);
     return 0;
 }

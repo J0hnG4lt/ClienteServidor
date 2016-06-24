@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <time.h>
+#include "cliente.h"
 #include "conjunto.h"
 #include "configuracion.h"
 
@@ -47,8 +48,8 @@ int main(int argc, char **argv){
     
     struct conj *carros = NULL; //Conjunto de carros en el estacionamiento
     
-    char *separador = (char *)malloc(sizeof(char));
-    separador[0] = ';'; //Separador de elementos del mensaje a enviar y recibir
+    char *separador = ";";
+    //Separador de elementos del mensaje a enviar y recibir
     
     FILE *archivoBitacoraEntrada;
     FILE *archivoBitacoraSalida;
@@ -152,17 +153,16 @@ int main(int argc, char **argv){
     
     //Ya no se necesita
     freeaddrinfo(dirServ);
-    
+    mensaje solicitud;
     //Se repite por cada mensaje entrante
     while(1){
         
         //Se recibe el mensaje de algún cliente
         struct sockaddr_storage dirClnt;
-        char solicitud[LON_MAX_MENSAJE+1];
         socklen_t tamanoSocket = sizeof(dirClnt);
         ssize_t numBytesRecibidos = recvfrom(socketSrvdrClt, 
-                                        solicitud, 
-                                        LON_MAX_MENSAJE,
+                                        &solicitud, 
+                                        sizeof solicitud - sizeof solicitud.pad,
                                         0,
                                         (struct sockaddr *) &dirClnt, 
                                         &tamanoSocket);
@@ -173,8 +173,9 @@ int main(int argc, char **argv){
         }
         
         //Se parsea el mensaje de llegada
-        accion = solicitud[0];
-        identificador = strdup(&solicitud[1]);
+        accion = solicitud.accion;
+        identificador = malloc(20);
+        sprintf(identificador, "%d", solicitud.ident);
         
         //Se obtiene el tiempo actual
         tiempo = time(NULL);
@@ -229,10 +230,11 @@ int main(int argc, char **argv){
         }
         printf("Puestos Ocupados: %d\n", numPuestosOcupados);
         
+        puts(respuesta);
         //Se envía el mensaje de respuesta
         ssize_t numBytesEnviados = sendto(socketSrvdrClt, 
                                         respuesta, 
-                                        numBytesRecibidos,
+                                        strlen(respuesta) + 1,
                                         0,
                                         (struct sockaddr *) &dirClnt, 
                                         tamanoSocket);

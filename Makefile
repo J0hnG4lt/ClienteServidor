@@ -7,11 +7,11 @@ else
 FLAGS = -Wall
 endif
 
+.PHONY: all clean
 all : cliente servidor
-	
-
-cliente : cliente.c configuracion.h
+cliente : cliente.c cliente.h configuracion.h
 	gcc $(FLAGS) cliente.c configuracion.h -o cliente
-
 servidor : servidor.c conjunto.c configuracion.h
 	gcc $(FLAGS) servidor.c conjunto.c configuracion.h -o servidor
+clean:
+	rm cliente servidor
