@@ -144,12 +144,9 @@ Descripción de Cada Archivo:
         
         Ejecución
         
-        Ejecutar la siguiente orden:
+            make test_hash
             
-            test_hash
-            
-        Dependencias: conjunto_hash.h
-        
+        Compilará las pruebas y las ejecutará.
 
 
 
