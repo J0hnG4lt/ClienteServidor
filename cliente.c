@@ -210,8 +210,8 @@ int main(int argc, char **argv){
     	printf("Debe cancelar: Bs. %d\n", precio);
     	printf("---------------------------------\n");
     	
-    } else if ((msj.accion == 's') && (permiso == 'n')){
-        printf("<<<<<<<<Factura Reenviada>>>>>>>>\n");
+    } else if ((msj.accion == 's') && (permiso == 'n')){ // En caso de que se
+        printf("<<<<<<<<Factura Reenviada>>>>>>>>\n");  //use la retransmisión
     	printf("---------------------------------\n");
     	printf("ID: %d\n", identificadorRcbd);
     	printf("Debe cancelar: Bs. %d\n", precio);
@@ -225,6 +225,8 @@ int main(int argc, char **argv){
     	printf("Hora: %d:%d\n", hora, minuto);
     	printf("Fecha: %d/%d/%d\n", dia,mes,anyo);
     	printf("---------------------------\n");
+    } else if ((msj.accion == 's') && (permiso == 'v')){
+        printf("<<<<Este ticket no es válido>>>>\n<<<<El vehículo no se encuentra>>>>\n");
     }
     
 

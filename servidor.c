@@ -255,7 +255,7 @@ int main(int argc, char **argv){
                 
             }
             else{
-                structRespuesta.accion = 'n';//No se puede ejecutar la acción
+                structRespuesta.accion = 'v';//No se puede ejecutar la acción
             }
             
             //Se registra la operación de salida
