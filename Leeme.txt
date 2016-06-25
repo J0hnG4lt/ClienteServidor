@@ -54,6 +54,8 @@ Descripción de Cada Archivo:
         
         Se debe introducir un puerto válido.
         No hay restricciones sobre el nombre de los archivos.
+        Los arhivos se abren con la opción 'w'. Se deben respaldar antes de
+        que el servidor se vuelva a activar.
         
         Dependencias: conjunto_hash.c; conjunto_hash.h; mensajes.h; configuracion.h
         
