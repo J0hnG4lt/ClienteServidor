@@ -210,7 +210,7 @@ int main(int argc, char **argv){
         if (accion == 'e'){
                 //Si quedan puestos y el carro no está ya en el conjunto
             if ((numPuestosOcupados < NUM_MAX_PUESTOS) && 
-				(insertarEnConj(&carros, identificador, tiempo) == false))
+				(insertarEnConj(&carros, identificador, tiempo) == true))
 			{
                 numPuestosOcupados++;
                 structRespuesta.accion = 's';//Sí se puede ejecutar la acción
