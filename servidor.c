@@ -241,17 +241,24 @@ int main(int argc, char **argv){
                 structRespuesta.precio = htonl(obtenerPrecio(tiempo - tiempoEstacionado));
                 //printf("PRECIO: %d\n", obtenerPrecio(tiempo-*tiempoEstacionado));
                 
+            //Se registra la operación de salida
+                fprintf(archivoBitacoraSalida, "Salida: %c. Identificador: %lu. Monto: Bs. %d.  Tiempo: %s\n",
+            								structRespuesta.accion,
+            								(unsigned long)identificador,
+            								obtenerPrecio(tiempo-tiempoEstacionado),
+            								tiempoString);
+                
             }
             else{
                 structRespuesta.accion = 'v';//No se puede ejecutar la acción
+                
+                fprintf(archivoBitacoraSalida, "Ticket inválido con Identificador: %lu Recibido el %s\n",
+            								(unsigned long)identificador,
+            								tiempoString);
+                
             }
             
-            //Se registra la operación de salida
-            fprintf(archivoBitacoraSalida, "Salida: %c. Identificador: %lu. Tiempo: %s. Monto: Bs. %d.\n",
-            								structRespuesta.accion,
-            								(unsigned long)identificador,
-            								tiempoString,
-            								obtenerPrecio(tiempo-tiempoEstacionado));
+
         
         }
         
