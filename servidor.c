@@ -20,11 +20,13 @@
 //Variables Globales
 FILE *archivoBitacoraEntrada = NULL;
 FILE *archivoBitacoraSalida = NULL;
+int socketSrvdrClt = -1;
 
 //Se una un manejador para cerrar bien el server, pues se usará ctr-c
 void manejadorINTERRUPT(int num){
     fclose(archivoBitacoraEntrada);
     fclose(archivoBitacoraSalida);
+    close(socketSrvdrClt);
     printf("\n----------------\n");
     printf("Servidor apagado\n");
     printf("----------------\n");
@@ -141,7 +143,7 @@ int main(int argc, char **argv){
     }
     
     //Creación del socket
-    int socketSrvdrClt = socket(dirServ->ai_family, dirServ->ai_socktype, dirServ->ai_protocol);
+    socketSrvdrClt = socket(dirServ->ai_family, dirServ->ai_socktype, dirServ->ai_protocol);
     if (!socketSrvdrClt){
         fprintf(stderr," Problema al crear el socket.\n");
         exit(EXIT_FAILURE);
