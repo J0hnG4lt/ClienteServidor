@@ -22,24 +22,8 @@ FILE *archivoBitacoraEntrada = NULL;
 FILE *archivoBitacoraSalida = NULL;
 int socketSrvdrClt = -1;
 
-//Se una un manejador para cerrar bien el server, pues se usará ctr-c
-void manejadorINTERRUPT(int num){
-    fclose(archivoBitacoraEntrada);
-    fclose(archivoBitacoraSalida);
-    close(socketSrvdrClt);
-    printf("\n----------------\n");
-    printf("Servidor apagado\n");
-    printf("----------------\n");
-    exit(0);
-}
-
-
-uint32_t obtenerPrecio(time_t duracion){
-    int horas = duracion / 3600;
-    if (duracion % 3600 != 0)
-        horas++;
-    return 80 + 30*(horas - 1);
-}
+void manejadorINTERRUPT(int num);
+uint32_t obtenerPrecio(time_t duracion);
 
 int main(int argc, char **argv){
     
@@ -262,7 +246,7 @@ int main(int argc, char **argv){
         //Se envía el mensaje de respuesta
         ssize_t numBytesEnviados = sendto(
 			socketSrvdrClt, 
-			structRespuesta,
+			&structRespuesta,
 			(sizeof structRespuesta - sizeof structRespuesta.pad),
 			0,
 			(struct sockaddr *) &dirClnt,
@@ -275,4 +259,22 @@ int main(int argc, char **argv){
     }
     
     return 0;
+}
+
+uint32_t obtenerPrecio(time_t duracion){
+    int horas = duracion / 3600;
+    if (duracion % 3600 != 0)
+        horas++;
+    return 80 + 30*(horas - 1);
+}
+
+//Se una un manejador para cerrar bien el server, pues se usará ctr-c
+void manejadorINTERRUPT(int num){
+    fclose(archivoBitacoraEntrada);
+    fclose(archivoBitacoraSalida);
+    close(socketSrvdrClt);
+    printf("\n----------------\n");
+    printf("Servidor apagado\n");
+    printf("----------------\n");
+    exit(0);
 }

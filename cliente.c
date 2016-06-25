@@ -43,8 +43,8 @@ int main(int argc, char **argv){
     
     // Variables para el chequeo de la entrada
     char * err;
-	long numPuerto;
-	bool flag_i, flag_d, flag_p, flag_c;
+    long numPuerto;
+    bool flag_i, flag_d, flag_p, flag_c;
     flag_i = flag_d = flag_p = flag_c = false;
     while ((opcn = getopt(argc,argv, "d:p:c:i:")) != -1){
         switch(opcn){
@@ -53,11 +53,11 @@ int main(int argc, char **argv){
                 flag_d = true;
                 break;
             case 'p':
-				numPuerto = strtol(optarg, &err, 10);
-				if ((*err != '\0') || (numPuerto < 1) || (numPuerto > MAX_PUERTO)) {
-					fprintf(stderr, "El puerto no es válido\n");
-					exit(EXIT_FAILURE);
-				}
+                numPuerto = strtol(optarg, &err, 10);
+                if ((*err != '\0') || (numPuerto < 1) || (numPuerto > MAX_PUERTO)) {
+                    fprintf(stderr, "El puerto no es válido\n");
+                    exit(EXIT_FAILURE);
+                }
                 puerto = optarg;
                 flag_p = true;
                 break;
@@ -77,9 +77,9 @@ int main(int argc, char **argv){
                 errno = 0;
                 identificador = strtoul(optarg, &err, 10);
                 if (*err!= '\0') {
-					fprintf(stderr,"El número de identificación no es válido.\n");
-					exit(EXIT_FAILURE);
-				} else if ((errno == ERANGE) || (identificador > UINT32_MAX)){
+                    fprintf(stderr,"El número de identificación no es válido.\n");
+                    exit(EXIT_FAILURE);
+                } else if ((errno == ERANGE) || (identificador > UINT32_MAX)){
                     fprintf(stderr,"El número de identificación es demasiado grande.\n");
                     exit(EXIT_FAILURE);
                 }
@@ -87,15 +87,15 @@ int main(int argc, char **argv){
                 flag_i = true;
                 break;
             default:
-				fprintf(stderr,"Formato de argumentos incorrecto.\nUso correcto:\n");
-				fprintf(stderr, uso_correcto);
+                fprintf(stderr,"Formato de argumentos incorrecto.\nUso correcto:\n");
+                fprintf(stderr, uso_correcto);
                 exit(EXIT_FAILURE);
         }
     }
     
     if (!(flag_d && flag_c && flag_i && flag_p)) {
-		fprintf(stderr,"Formato de argumentos incorrecto.\nUso correcto:\n");
-		fprintf(stderr, uso_correcto);
+        fprintf(stderr,"Formato de argumentos incorrecto.\nUso correcto:\n");
+        fprintf(stderr, uso_correcto);
     }
     
     //El tipo de socket a usar (UDP)
@@ -133,15 +133,14 @@ int main(int argc, char **argv){
     
     //Se configura el socket para esperar un tiempo máximo al recibir
     if (setsockopt(socketCltSrvdr, 
-                    SOL_SOCKET, 
-                    SO_RCVTIMEO, 
-                    &tiempoEsperaMax, 
-                    sizeof(tiempoEsperaMax))){
-        
+                   SOL_SOCKET, 
+                   SO_RCVTIMEO, 
+                   &tiempoEsperaMax, 
+                   sizeof(tiempoEsperaMax)))
+    {
         fprintf(stderr," Problema al establecer tiempo máximo de espera\n");
         exit(EXIT_FAILURE);
     }
-    
     
     ssize_t numBytesEnviados=-1;
     struct sockaddr_storage dirOrigenServ;
@@ -153,27 +152,28 @@ int main(int argc, char **argv){
     //msj.ack=0;
     int identificadorRcbd=-1;
     //Se repite hasta que se envíe y reciba la info o se agoten los intentos.
-    while((i < NUM_INTENTOS) && ((numBytesEnviados==-1) || (numBytesRecibidos < 0) || (identificadorRcbd != identificador))){
+    while((i < NUM_INTENTOS) && 
+		 ((numBytesEnviados==-1) || (numBytesRecibidos < 0) || 
+			(identificadorRcbd != identificador)))
+	{
         //La identidad del cliente también ha de estar en el mensaje de respuesta del server
+        numBytesEnviados = sendto(
+            socketCltSrvdr, 
+            &msj,
+            sizeof msj - sizeof msj.pad, 
+            0, 
+            dirServ->ai_addr, 
+            dirServ->ai_addrlen);
         
-        numBytesEnviados = sendto(socketCltSrvdr, 
-                                    &msj,
-                                    sizeof msj - sizeof msj.pad, 
-                                    0, 
-                                    dirServ->ai_addr, 
-                                    dirServ->ai_addrlen);
-        
-        numBytesRecibidos = recvfrom(socketCltSrvdr, &structRespuesta, 
-                                    sizeof structRespuesta - sizeof structRespuesta.pad, 0,
-                                    (struct sockaddr *) &dirOrigenServ, 
-                                    &tamanoSocket);
+        numBytesRecibidos = recvfrom(
+            socketCltSrvdr, &structRespuesta, 
+            sizeof structRespuesta - sizeof structRespuesta.pad, 0,
+            (struct sockaddr *) &dirOrigenServ, 
+            &tamanoSocket);
         
         i++;
-        identificadorRcbd = ntohl(structRespuesta.ident);
-        
-        
+        identificadorRcbd = ntohl(structRespuesta.ident); 
     }
-    
     
     if (!socketCltSrvdr){
         fprintf(stderr,"Problema al enviar información.\n");
@@ -185,6 +185,7 @@ int main(int argc, char **argv){
     
     if (identificadorRcbd != identificador){
         fprintf(stderr, "No se recibió un mensaje correspondiente al cliente.\n");
+		exit(EXIT_FAILURE);
     }
     
     if (i==NUM_INTENTOS){
@@ -192,9 +193,7 @@ int main(int argc, char **argv){
         exit(EXIT_FAILURE);
     }
     
-    
     char permiso = structRespuesta.accion;
-    
     int dia = (int) (structRespuesta.dia);
     int mes = (int) (structRespuesta.mes);
     int anyo = ((int) (structRespuesta.anyo))-100+2000;
@@ -202,49 +201,44 @@ int main(int argc, char **argv){
     int minuto = (int) (structRespuesta.minuto);
     int precio = (int) ntohl(structRespuesta.precio);
     
-    
-    
     if ((msj.accion == 'e') && (permiso == 's')){
-    	printf("Puede Pasar\n");
-    	printf("-----------Ticket---------\n");
-    	printf("ID: %d\n", identificadorRcbd);
-    	printf("Hora: %d:%d\n", hora, minuto);
-    	printf("Fecha: %d/%d/%d\n", dia,mes,anyo);
-    	printf("---------------------------\n");
-    	
+        printf("Puede Pasar\n");
+        printf("-----------Ticket---------\n");
+        printf("ID: %d\n", identificadorRcbd);
+        printf("Hora: %d:%d\n", hora, minuto);
+        printf("Fecha: %d/%d/%d\n", dia,mes,anyo);
+        printf("---------------------------\n");
+        
     } else if ((msj.accion == 'e') && (permiso == 'n')){
-    	printf("En este momento no hay puestos\n");
-    	
+        printf("En este momento no hay puestos\n");
+        
     } else if ((msj.accion == 's') && (permiso == 's')){
-    	printf("---------------------------------\n");
-    	printf("ID: %d\n", identificadorRcbd);
-    	printf("Debe cancelar: Bs. %d\n", precio);
-    	printf("---------------------------------\n");
-    	
+        printf("---------------------------------\n");
+        printf("ID: %d\n", identificadorRcbd);
+        printf("Debe cancelar: Bs. %d\n", precio);
+        printf("---------------------------------\n");
+        
     } else if ((msj.accion == 's') && (permiso == 'n')){ // En caso de que se
         printf("<<<<<<<<Factura Reenviada>>>>>>>>\n");  //use la retransmisión
-    	printf("---------------------------------\n");
-    	printf("ID: %d\n", identificadorRcbd);
-    	printf("Debe cancelar: Bs. %d\n", precio);
-    	printf("---------------------------------\n");
-    	
+        printf("---------------------------------\n");
+        printf("ID: %d\n", identificadorRcbd);
+        printf("Debe cancelar: Bs. %d\n", precio);
+        printf("---------------------------------\n");
+        
     } else if ((msj.accion == 'e') && (permiso == 'f')){
-    	printf("<<<<<<<Ticket Reenviado>>>>>>>\n");
-    	printf("Puede Pasar\n");
-    	printf("-----------Ticket----------\n");
-    	printf("ID: %d\n", identificadorRcbd);
-    	printf("Hora: %d:%d\n", hora, minuto);
-    	printf("Fecha: %d/%d/%d\n", dia,mes,anyo);
-    	printf("---------------------------\n");
+        printf("<<<<<<<Ticket Reenviado>>>>>>>\n");
+        printf("Puede Pasar\n");
+        printf("-----------Ticket----------\n");
+        printf("ID: %d\n", identificadorRcbd);
+        printf("Hora: %d:%d\n", hora, minuto);
+        printf("Fecha: %d/%d/%d\n", dia,mes,anyo);
+        printf("---------------------------\n");
     } else if ((msj.accion == 's') && (permiso == 'v')){
         printf("<<<<Este ticket no es válido>>>>\n<<<<El vehículo no se encuentra>>>>\n");
     }
     
-
     freeaddrinfo(dirServ);
-    
     close(socketCltSrvdr);
-    
     
     return 0;
 }
