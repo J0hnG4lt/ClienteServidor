@@ -1,0 +1,153 @@
+Autores:    Alfredo Fanghella     12-10967
+            Georvic Tur           12-11402
+
+
+Archivos que componen este proyecto:
+    
+    servidor.c
+    cliente.c
+    mensajes.h
+    configuracion.h
+    conjunto_hash.c
+    conjunto_hash.h
+    Makefile
+    test_hash.c
+
+Para compilar el servior y el cliente sólo ha de dirigirse en el terminal
+al directorio que contenga esos arhivos y ejecutar la orden:
+
+    make
+
+Si quiere compilar el proyecto con la intención de hacer debugging, use
+la opción DEBUG:
+
+    make DEBUG=1
+
+
+Descripción de Cada Archivo:
+    
+    servidor.c
+        
+        Contenido y Función
+        
+        Este archivo contiene el programa principal de la aplicación servidor
+        que corre en la computadora principal. Dicho programa usa un socket
+        para escuchar y atender a cualquier conexión entrante por el puerto
+        indicado en su dirección IP. Luego se queda en un bucle infinito
+        esperando por una solicitud. Si la recibe, entonces la procesa
+        dependiendo de si es de entrada o de salida. Si se manda una SIGINT,
+        se pasa el control a una rutina manejadora de señales que termina
+        el programa de manera adecuada. Guarda las operaciones de entrada
+        en una bitácora de entrada y las de salida y una bitácora de salida.
+        
+        Ejecución
+        
+        Se puede llamar usando la siguiente orden:
+        
+            sem_svr -l <puerto a servir> -i <bitácora de entrada> -o <bitácora de salida>\n
+        
+        El orden de las opciones con sus sendos argumentos no es importante.
+        Lo importante es que cada opción esté a la izquierda del argumento que
+        espera.
+        
+        Consideraciones Especiales
+        
+        Se debe introducir un puerto válido.
+        No hay restricciones sobre el nombre de los archivos.
+        
+        Dependencias: conjunto_hash.c; conjunto_hash.h; mensajes.h; configuracion.h
+        
+        
+    cliente.c
+        
+        Contenido y Función
+        
+        Este archivo contiene el programa principal de la aplicación cliente
+        que corre en la computadora de cada puerta del estacionamiento.
+        El cliente se activa si el conductor presiona el botón o si introduce
+        un ticket. De activarse, el cliente usa un socket para enviarle su
+        solicitud al servidor. Luego de recibir su respuesta, termina e 
+        imprime el resultado de la misma.
+        
+        Ejecución
+        
+            sem_cli -d <dirección IP o nombre de dominio> -p <puerto> -c <acción> -i <identificador de vehículo>
+        
+        El orden de las opciones con sus sendos argumentos no es importante.
+        Lo importante es que cada opción esté a la izquierda del argumento que
+        espera.
+        
+        Consideraciones Especiales
+        
+        El puerto introducido tiene que ser válido.
+        El identificador usado tiene que ser menor a UINT32_MAX
+        La acción sólo puede ser un caracter 's' (salida) o 'e' (entrada)
+        
+        Dependencias: cliente.c; mensajes.h; configuracion.h
+        
+    conjunto_hash.c
+        
+        Contenido
+        
+        Contiene la implementación de las operaciones para una estructura de 
+        datos de tipo conjunto usando una tabla de hash estática.
+        
+        Dependencias: conjunto_hash.h
+        
+    conjunto_hash.h
+        
+        Contenido
+        
+        Contiene la definición de la estructura de datos hash_elem y conjunto.
+        También contiene la declaración de las subrutinas implementadas en
+        conjunto_hash.c.
+        
+        
+    mensajes.h
+        
+        Contenido
+        
+        Contiene la definición de las estructuras de datos que representan
+        los formatos de los mensajes. Estas estructuras se usan directamente
+        en los sendto y recvfrom para enviar la información.
+        
+        Condiciones Particulares
+        
+        Cabe destacar que el campo anyo en la estructura de mensaje_s es el
+        número de años desde 1900.
+        Ambas estructuras usan un campo de padding que sólo se usa para 
+        dar el tamaño correcto de la estructura al enviarla.
+        
+        
+    configuracion.h
+        
+        Contenido
+        
+        Contiene la definición de constantes importantes como el número
+        máximo de puestos del estacionamiento, el número de puertos o el
+        tiempo máximo de espera en el uso de recvfrom para el cliente.
+        
+        
+    Makefile
+        
+        Makefile para compilar el programa del cliente y el del servidor.
+        
+    test_hash.c
+        
+        Contenido y Función
+        
+        Implementa cuatro pruebas unitarias para la estructura de datos usada.
+        El buen funcionamiento de esta estructura es el basamento fundamental
+        para el servidor. Se ha incluido para llevar el control del proyecto.
+        
+        Ejecución
+        
+        Ejecutar la siguiente orden:
+            
+            test_hash
+            
+        Dependencias: conjunto_hash.h
+        
+
+
+
