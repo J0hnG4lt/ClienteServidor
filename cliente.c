@@ -138,11 +138,15 @@ int main(int argc, char **argv){
     ssize_t numBytesRecibidos = 0;
     int i=0;
     
-    //Se repite hasta que se envíe y reciba la info o se agoten los intentos
-    while((i < NUM_INTENTOS) && ((numBytesEnviados==-1) || (numBytesRecibidos < 0))){
+    //No se necesita
+    //msj.ack=0;
+    int identificadorRcbd=-1;
+    //Se repite hasta que se envíe y reciba la info o se agoten los intentos.
+    while((i < NUM_INTENTOS) && ((numBytesEnviados==-1) || (numBytesRecibidos < 0) || (identificadorRcbd != identificador))){
+        //La identidad del cliente también ha de estar en el mensaje de respuesta del server
         
         numBytesEnviados = sendto(socketCltSrvdr, 
-                                    &msj, 
+                                    &msj,
                                     sizeof msj - sizeof msj.pad, 
                                     0, 
                                     dirServ->ai_addr, 
@@ -154,6 +158,9 @@ int main(int argc, char **argv){
                                     &tamanoSocket);
         
         i++;
+        identificadorRcbd = ntohl(structRespuesta.ident);
+        
+        
     }
     
     
@@ -165,6 +172,10 @@ int main(int argc, char **argv){
         fprintf(stderr,"No se recibió ningún mensaje.\n");
     }
     
+    if (identificadorRcbd != identificador){
+        fprintf(stderr, "No se recibió un mensaje correspondiente al cliente.\n");
+    }
+    
     if (i==NUM_INTENTOS){
         fprintf(stderr,"Tiempo de respuesta agotado.\n");
         exit(EXIT_FAILURE);
@@ -172,7 +183,7 @@ int main(int argc, char **argv){
     
     
     char permiso = structRespuesta.accion;
-    int identificadorRcbd = ntohl(structRespuesta.ident);//(unsigned long) ntohl(structRespuesta.ident);
+    
     int dia = (int) (structRespuesta.dia);
     int mes = (int) (structRespuesta.mes);
     int anyo = ((int) (structRespuesta.anyo))-100+2000;
@@ -181,13 +192,6 @@ int main(int argc, char **argv){
     int precio = (int) ntohl(structRespuesta.precio);
     
     
-    
-    //Se verifica que el identificador recibido corresponda al cliente actual
-    
-    if (identificadorRcbd != identificador){
-        fprintf(stderr," Respuesta recibida no corresponde al conductor.\n");
-        exit(EXIT_FAILURE);
-    }
     
     if ((msj.accion == 'e') && (permiso == 's')){
     	printf("Puede Pasar\n");
@@ -207,10 +211,20 @@ int main(int argc, char **argv){
     	printf("---------------------------------\n");
     	
     } else if ((msj.accion == 's') && (permiso == 'n')){
-    	printf("¡Identidad falsa!\n");
+        printf("<<<<<<<<Factura Reenviada>>>>>>>>\n");
+    	printf("---------------------------------\n");
+    	printf("ID: %d\n", identificadorRcbd);
+    	printf("Debe cancelar: Bs. %d\n", precio);
+    	printf("---------------------------------\n");
     	
     } else if ((msj.accion == 'e') && (permiso == 'f')){
-    	printf("¡Identidad falsa!\n");
+    	printf("<<<<<<<Ticket Reenviado>>>>>>>\n");
+    	printf("Puede Pasar\n");
+    	printf("-----------Ticket----------\n");
+    	printf("ID: %d\n", identificadorRcbd);
+    	printf("Hora: %d:%d\n", hora, minuto);
+    	printf("Fecha: %d/%d/%d\n", dia,mes,anyo);
+    	printf("---------------------------\n");
     }
     
 

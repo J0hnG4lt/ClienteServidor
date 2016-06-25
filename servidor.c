@@ -210,7 +210,7 @@ int main(int argc, char **argv){
         ///////////////////////////////////////////
         structRespuesta.ident = solicitud.ident;
         structRespuesta.dia = ((uint32_t) structTiempo->tm_mday);
-        structRespuesta.mes = ((uint32_t) structTiempo->tm_mon);
+        structRespuesta.mes = ((uint32_t) structTiempo->tm_mon)+1;
         structRespuesta.anyo = (((uint32_t) structTiempo->tm_year)); //tm_year tiene el anyo mal
         structRespuesta.hora = ((uint32_t) structTiempo->tm_hour);
         structRespuesta.minuto = ((uint32_t) structTiempo->tm_min);
@@ -230,7 +230,7 @@ int main(int argc, char **argv){
                 structRespuesta.accion = 's';//Sí se puede ejecutar la acción
             
             } else{
-                structRespuesta.accion = 'f';//No se puede ejecutar la acción
+                structRespuesta.accion = 'f';//Se reenvía el ticket
                 
             }
             
@@ -268,7 +268,6 @@ int main(int argc, char **argv){
         }
         
         //printf("Puestos Ocupados: %d\n", numPuestosOcupados);
-        
         
         
         //Se envía el mensaje de respuesta
