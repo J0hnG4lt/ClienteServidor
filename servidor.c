@@ -213,16 +213,18 @@ int main(int argc, char **argv){
                 numPuestosOcupados++;
                 structRespuesta.accion = 's';//Sí se puede ejecutar la acción
             
-            } else{
+            } else if (numPuestosOcupados < NUM_MAX_PUESTOS){
                 structRespuesta.accion = 'f';//Se reenvía el ticket
                 
+            } else {
+                structRespuesta.accion = 'n';
             }
           
             structRespuesta.precio = htonl((uint32_t) 0);
             
             //Se registra la operación de entrada
             fprintf(archivoBitacoraEntrada, 
-				"Entrada: %c. Identificador: %lu. Tiempo: %s\n",
+				"Entrada: %c. Identificador: %lu. Tiempo: %s",
                 structRespuesta.accion,
                 (unsigned long)identificador,
                 tiempoString);
@@ -238,7 +240,7 @@ int main(int argc, char **argv){
                 
                 //Se registra la operación de salida
                 fprintf(archivoBitacoraSalida, 
-					"Salida: %c. Identificador: %lu. Monto: Bs. %d.  Tiempo: %s\n",
+					"Salida: %c. Identificador: %lu. Monto: Bs. %d.  Tiempo: %s",
                     structRespuesta.accion,
                     (unsigned long)identificador,
                     obtenerPrecio(tiempo-tiempoEstacionado),
@@ -248,7 +250,7 @@ int main(int argc, char **argv){
                 structRespuesta.accion = 'v';//No se puede ejecutar la acción
                 
                 fprintf(archivoBitacoraSalida, 
-					"Ticket inválido con Identificador: %lu Recibido el %s\n",
+					"Ticket inválido con Identificador: %lu Recibido el %s",
                     (unsigned long)identificador,
                      tiempoString);
             }
