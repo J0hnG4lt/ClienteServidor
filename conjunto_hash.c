@@ -96,7 +96,7 @@ bool insertarEnConj(conjunto * c, uint32_t identificador, time_t tiempo) {
  */
 bool eliminarEnConj(conjunto *c, uint32_t identificador, time_t *tiempoEstacionado){
 	int hash = identificador % TAM_HASH;
-	int n;
+	int n = 0;
 	
 	while (n < TAM_HASH) {
 		if (c->elems[hash].estado == OCUPADO) {
