@@ -11,7 +11,7 @@ endif
 all : cliente servidor
 cliente : cliente.c cliente.h configuracion.h
 	gcc $(FLAGS) cliente.c configuracion.h -o cliente
-servidor : servidor.c conjunto.c configuracion.h
-	gcc $(FLAGS) servidor.c conjunto.c configuracion.h -o servidor
+servidor : servidor.c conjunto_hash.c conjunto_hash.h configuracion.h
+	gcc $(FLAGS) servidor.c conjunto_hash.c configuracion.h -o servidor
 clean:
 	rm cliente servidor

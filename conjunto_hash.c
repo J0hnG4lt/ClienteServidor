@@ -21,8 +21,6 @@
  * Inicializa el conjunto, dejándolo listo para recibir elementos.
  *
  * @param conjunto Conjunto vacío cuya memoria ya ha sido asignada
- * @param identificador ID numérico del carro
- * @param tiempo Tiempo de llegada medido en segundos desde epoch
  */
 void inicializarConj(conjunto * c){
     memset(c, 0, sizeof(conjunto));

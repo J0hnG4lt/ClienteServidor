@@ -10,7 +10,7 @@
 #include <signal.h>
 #include <time.h>
 #include "cliente.h"
-#include "conjunto.h"
+#include "conjunto_hash.h"
 #include "configuracion.h"
 
 // Autores: Georvic Tur           12-11402
@@ -20,16 +20,11 @@
 //Variables Globales
 FILE *archivoBitacoraEntrada = NULL;
 FILE *archivoBitacoraSalida = NULL;
-time_t *tiempoEstacionado = NULL;
-struct conj *carros = NULL; //Conjunto de carros en el estacionamiento
-
 
 //Se una un manejador para cerrar bien el server, pues se usará ctr-c
 void manejadorINTERRUPT(int num){
     fclose(archivoBitacoraEntrada);
     fclose(archivoBitacoraSalida);
-    free(tiempoEstacionado);
-    liberarConj(carros);
     printf("\n----------------\n");
     printf("Servidor apagado\n");
     printf("----------------\n");
@@ -60,22 +55,13 @@ int main(int argc, char **argv){
     char *bitacoraEntrada=NULL;
     char *bitacoraSalida=NULL;
     char *puerto=NULL;
-    
-    //
-    char accion; //Entrar o Salir del estacionamiento
-    char *identificador = NULL; //ID del carro actual
-    int numPuestosOcupados = 0; //Número de puestos ocupados
-    
-    tiempoEstacionado = malloc(sizeof(time_t));
-    
 
     //Se registra el manejador
     signal(SIGINT, manejadorINTERRUPT);
     
     //Estructura para obtener el tiempo. Luego se pone en el mensaje de respuesta.
-    time_t tiempo = time(NULL);
-    char *tiempoString = asctime(localtime(&tiempo));
-    
+    time_t tiempo;
+    char *tiempoString;
     struct tm *structTiempo;
     
     // Variables para chequeo de la entrada
@@ -171,6 +157,12 @@ int main(int argc, char **argv){
     freeaddrinfo(dirServ);
     mensaje_c solicitud;
     mensaje_s structRespuesta;
+    char accion; //Entrar o Salir del estacionamiento
+    uint32_t identificador; //ID del carro actual
+    int numPuestosOcupados = 0; //Número de puestos ocupados
+    conjunto carros; //Conjunto de carros en el estacionamiento
+    inicializarConj(&carros);
+    time_t tiempoEstacionado;
     //Se repite por cada mensaje entrante
     while(1){
         
@@ -192,40 +184,34 @@ int main(int argc, char **argv){
         
         //Se parsea el mensaje de llegada
         accion = solicitud.accion;
-        identificador = malloc(20);
-        sprintf(identificador, "%d", ntohl(solicitud.ident));
-        
+        identificador = ntohl(solicitud.ident);
+               
         //Se obtiene el tiempo actual
         tiempo = time(NULL);
         tiempoString = asctime(localtime(&tiempo));
-        tiempoString[strlen(tiempoString)-1] = '\0';
+        structTiempo = localtime(&tiempo);
 		
 		printf("------------------------------------\n");
-        printf("Recibida solicitud de %s en %s\n", identificador, tiempoString);
+        printf(
+			"Recibida solicitud de %lu en %s\n", 
+			(unsigned long)identificador, tiempoString
+		);
         printf("------------------------------------\n");
-        
-        structTiempo = localtime(&tiempo);
 		
         //Se construye el mensaje de respuesta
         ///////////////////////////////////////////
         structRespuesta.ident = solicitud.ident;
-        structRespuesta.dia = ((uint32_t) structTiempo->tm_mday);
-        structRespuesta.mes = ((uint32_t) structTiempo->tm_mon)+1;
-        structRespuesta.anyo = (((uint32_t) structTiempo->tm_year)); //tm_year tiene el anyo mal
-        structRespuesta.hora = ((uint32_t) structTiempo->tm_hour);
-        structRespuesta.minuto = ((uint32_t) structTiempo->tm_min);
+        structRespuesta.dia = ((uint8_t) structTiempo->tm_mday);
+        structRespuesta.mes = ((uint8_t) structTiempo->tm_mon)+1;
+        structRespuesta.anyo = (((uint8_t) structTiempo->tm_year)); //tm_year tiene el anyo mal
+        structRespuesta.hora = ((uint8_t) structTiempo->tm_hour);
+        structRespuesta.minuto = ((uint8_t) structTiempo->tm_min);
         //Si el cliente quiere salir o entrar
         if (accion == 'e'){
-            
-            
-            if(carros == NULL){
-                carros = (struct conj *)malloc(sizeof(struct conj));
-                inicializarConj(carros,identificador, time(NULL));
-                numPuestosOcupados++;
-                structRespuesta.accion = 's';//Sí se puede ejecutar la acción
-                
                 //Si quedan puestos y el carro no está ya en el conjunto
-            } else if ((numPuestosOcupados < NUM_MAX_PUESTOS) && (insertarEnConj(carros,identificador, time(NULL)) == 0)){
+            if ((numPuestosOcupados < NUM_MAX_PUESTOS) && 
+				(insertarEnConj(&carros, identificador, tiempo) == false))
+			{
                 numPuestosOcupados++;
                 structRespuesta.accion = 's';//Sí se puede ejecutar la acción
             
@@ -238,19 +224,21 @@ int main(int argc, char **argv){
             
             
             //Se registra la operación de entrada
-            fprintf(archivoBitacoraEntrada, "Entrada: %c. Identificador: %s. Tiempo: %s\n",
+            fprintf(archivoBitacoraEntrada, "Entrada: %c. Identificador: %lu. Tiempo: %s\n",
             								structRespuesta.accion,
-            								identificador,
+            								(unsigned long)identificador,
             								tiempoString);
             
             
         } else if (accion == 's'){
             
             //Si hay carros y el carro que va a salir está en el conjunto
-            if ((numPuestosOcupados > 0) && (eliminarEnConj(&carros,identificador,tiempoEstacionado)==1)){
+            if ((numPuestosOcupados > 0) && 
+				(eliminarEnConj(&carros,identificador,&tiempoEstacionado)==true))
+			{
                 numPuestosOcupados--;
                 structRespuesta.accion = 's';//Sí se puede ejecutar la acción
-                structRespuesta.precio = htonl(obtenerPrecio(tiempo - *tiempoEstacionado));
+                structRespuesta.precio = htonl(obtenerPrecio(tiempo - tiempoEstacionado));
                 //printf("PRECIO: %d\n", obtenerPrecio(tiempo-*tiempoEstacionado));
                 
             }
@@ -259,11 +247,11 @@ int main(int argc, char **argv){
             }
             
             //Se registra la operación de salida
-            fprintf(archivoBitacoraSalida, "Salida: %c. Identificador: %s. Tiempo: %s. Monto: Bs. %d.\n",
+            fprintf(archivoBitacoraSalida, "Salida: %c. Identificador: %lu. Tiempo: %s. Monto: Bs. %d.\n",
             								structRespuesta.accion,
-            								identificador,
+            								(unsigned long)identificador,
             								tiempoString,
-            								obtenerPrecio(tiempo-*tiempoEstacionado));
+            								obtenerPrecio(tiempo-tiempoEstacionado));
         
         }
         
