@@ -1,3 +1,14 @@
+/**
+ * Este archivo contiene la implementación del programa cliente, que operaría
+ * las puertas del estacionamiento. El formato de mensaje y las constantes de
+ * configuración estan en otros header.
+ * 
+ * @author Alfredo Fanghella, 12-10967
+ * @author Georvic Tur, 12-11402
+ * @see mensajes.h
+ * @see configuracion.h
+ */
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -12,11 +23,12 @@
 #include "configuracion.h"
 #include "mensajes.h"
 
-// Autores: Georvic Tur           12-11402
-//          Alfredo Fanghella     12-10967
-
-//Constantes definidas en el archivo de configuración
-
+/**
+ * Rutina principal del proceso cliente.
+ * 
+ * @param argc Número de argumentos
+ * @param argv Debe contener puerto, acción, ID del carro y nombre de dominio o IP
+ */
 int main(int argc, char **argv){
     
     char uso_correcto[] ="sem_cli -d <dirección IP o nombre de dominio>\n\t\

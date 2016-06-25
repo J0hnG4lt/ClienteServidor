@@ -1,3 +1,12 @@
+/**
+ * Programa principal, que operaría en el computador central del estacionamiento.
+ * Lleva la cuenta de la cantidad de carros dentro, y guarda sus identificadores
+ * en un conjunto. Responde las solicitudes de los clientes y las registra en
+ * las bitácoras.
+ * 
+ * @author Alfredo Fanghella, 12-10967
+ * @author Georvic Tur, 12-11402
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -13,10 +22,6 @@
 #include "conjunto_hash.h"
 #include "configuracion.h"
 
-// Autores: Georvic Tur           12-11402
-//          Alfredo Fanghella     12-10967
-
-
 //Variables Globales
 FILE *archivoBitacoraEntrada = NULL;
 FILE *archivoBitacoraSalida = NULL;
@@ -25,6 +30,12 @@ int socketSrvdrClt = -1;
 void manejadorINTERRUPT(int num);
 uint32_t obtenerPrecio(time_t duracion);
 
+/**
+ * Rutina principal del proceso servidor.
+ * 
+ * @param argc Número de argumentos
+ * @param argv Debe contener el puerto a utilizar y los nombres de las bitácoras
+ */
 int main(int argc, char **argv){
     
     char uso_correcto[] = "sem_svr\n\t-l <puerto a servir>\n\t\
@@ -261,6 +272,12 @@ int main(int argc, char **argv){
     return 0;
 }
 
+/**
+ * Calcula cuanto debe pagar el cliente al salir del estacionamiento.
+ * 
+ * @param duracion Tiempo total de estadía del cliente
+ * @return monto que el cliente debe pagar
+ */
 uint32_t obtenerPrecio(time_t duracion){
     int horas = duracion / 3600;
     if (duracion % 3600 != 0)
@@ -268,7 +285,12 @@ uint32_t obtenerPrecio(time_t duracion){
     return 80 + 30*(horas - 1);
 }
 
-//Se una un manejador para cerrar bien el server, pues se usará ctr-c
+/**
+ * Manejador de señales para manejar el SIGINT que generá el Ctrl-c y 
+ * terminar el programa limpiamente.
+ * 
+ * @param código de señal. Parámetro requerido por el SO.
+ */
 void manejadorINTERRUPT(int num){
     fclose(archivoBitacoraEntrada);
     fclose(archivoBitacoraSalida);

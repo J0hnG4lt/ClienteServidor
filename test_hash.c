@@ -1,7 +1,9 @@
-// Autores: Georvic Tur           12-11402
-//          Alfredo Fanghella     12-10967
-// Pruebas unitarias para las operaciones sobre el tipo de dato conjunto.
-
+/**
+ * Pruebas unitarias para el tipo de dato conjunto.
+ * 
+ * @author Alfredo Fanghella, 12-10967
+ * @author Georvic Tur, 12-11402
+ */
 #include "conjunto_hash.h"
 #include <stdio.h>
 #include <assert.h>
