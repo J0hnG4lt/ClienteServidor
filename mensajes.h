@@ -1,17 +1,7 @@
-#ifndef CLIENTE
-#define CLIENTE
+#ifndef MENSAJES
+#define MENSAJES
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <errno.h>
-#include <time.h>
+#include <stdint.h>
 
 typedef struct {
 	uint32_t ident;

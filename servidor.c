@@ -9,7 +9,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <time.h>
-#include "cliente.h"
+#include "mensajes.h"
 #include "conjunto_hash.h"
 #include "configuracion.h"
 
@@ -35,10 +35,10 @@ void manejadorINTERRUPT(int num){
 
 
 uint32_t obtenerPrecio(time_t duracion){
-	int horas = duracion / 3600;
-	if (duracion % 3600 != 0)
-		horas++;
-	return 80 + 30*(horas - 1);
+    int horas = duracion / 3600;
+    if (duracion % 3600 != 0)
+        horas++;
+    return 80 + 30*(horas - 1);
 }
 
 int main(int argc, char **argv){
@@ -81,11 +81,11 @@ int main(int argc, char **argv){
                 flag_i = true;
                 break;
              case 'l':
-				numPuerto = strtol(optarg, &err, 10);
-				if ((*err != '\0') || (numPuerto < 1) || (numPuerto > MAX_PUERTO)) {
-					fprintf(stderr, "El puerto no es válido\n");
-					exit(EXIT_FAILURE);
-				}
+                numPuerto = strtol(optarg, &err, 10);
+                if ((*err != '\0') || (numPuerto < 1) || (numPuerto > MAX_PUERTO)) {
+                    fprintf(stderr, "El puerto no es válido\n");
+                    exit(EXIT_FAILURE);
+                }
                 puerto = optarg;
                 flag_l = true;
                 break;
@@ -94,15 +94,15 @@ int main(int argc, char **argv){
                  flag_o = true;
                  break;
             default:
-				fprintf(stderr,"Formato de argumentos incorrecto.\nUso correcto:\n");
-				fprintf(stderr, uso_correcto);
+                fprintf(stderr,"Formato de argumentos incorrecto.\nUso correcto:\n");
+                fprintf(stderr, uso_correcto);
                 exit(EXIT_FAILURE);
         }
     }
     
     if (!(flag_o && flag_l && flag_i)) {
-		fprintf(stderr,"Formato de argumentos incorrecto.\nUso correcto:\n");
-		fprintf(stderr, uso_correcto);
+        fprintf(stderr,"Formato de argumentos incorrecto.\nUso correcto:\n");
+        fprintf(stderr, uso_correcto);
     }
     
     printf("-------------------------------------------\n");
@@ -159,30 +159,31 @@ int main(int argc, char **argv){
     freeaddrinfo(dirServ);
     mensaje_c solicitud;
     mensaje_s structRespuesta;
-    char accion; //Entrar o Salir del estacionamiento
-    uint32_t identificador; //ID del carro actual
+    char accion;                //Entrar o Salir del estacionamiento
+    uint32_t identificador;     //ID del carro actual
     int numPuestosOcupados = 0; //Número de puestos ocupados
-    conjunto carros; //Conjunto de carros en el estacionamiento
+    conjunto carros;            //Conjunto de carros en el estacionamiento
     inicializarConj(&carros);
     time_t tiempoEstacionado;
     //Se repite por cada mensaje entrante
+    
     while(1){
         
         //Se recibe el mensaje de algún cliente
         struct sockaddr_storage dirClnt;
         socklen_t tamanoSocket = sizeof(dirClnt);
-        ssize_t numBytesRecibidos = recvfrom(socketSrvdrClt, 
-                                        &solicitud, 
-                                        sizeof solicitud - sizeof solicitud.pad,
-                                        0,
-                                        (struct sockaddr *) &dirClnt, 
-                                        &tamanoSocket);
+        ssize_t numBytesRecibidos = recvfrom(
+			socketSrvdrClt, 
+            &solicitud, 
+            sizeof solicitud - sizeof solicitud.pad,
+            0,
+            (struct sockaddr *) &dirClnt, 
+            &tamanoSocket);
         
         if (!numBytesRecibidos){
             fprintf(stderr,"Error al recibir solicitud.\n");
             exit(EXIT_FAILURE);
         }
-        
         
         //Se parsea el mensaje de llegada
         accion = solicitud.accion;
@@ -192,14 +193,14 @@ int main(int argc, char **argv){
         tiempo = time(NULL);
         tiempoString = asctime(localtime(&tiempo));
         structTiempo = localtime(&tiempo);
-		
-		printf("------------------------------------\n");
-        printf(
-			"Recibida solicitud de %lu en %s\n", 
-			(unsigned long)identificador, tiempoString
-		);
+        
         printf("------------------------------------\n");
-		
+        printf(
+            "Recibida solicitud de %lu en %s\n", 
+            (unsigned long)identificador, tiempoString
+        );
+        printf("------------------------------------\n");
+        
         //Se construye el mensaje de respuesta
         ///////////////////////////////////////////
         structRespuesta.ident = solicitud.ident;
@@ -212,8 +213,8 @@ int main(int argc, char **argv){
         if (accion == 'e'){
                 //Si quedan puestos y el carro no está ya en el conjunto
             if ((numPuestosOcupados < NUM_MAX_PUESTOS) && 
-				(insertarEnConj(&carros, identificador, tiempo) == true))
-			{
+                (insertarEnConj(&carros, identificador, tiempo) == true))
+            {
                 numPuestosOcupados++;
                 structRespuesta.accion = 's';//Sí se puede ejecutar la acción
             
@@ -221,69 +222,56 @@ int main(int argc, char **argv){
                 structRespuesta.accion = 'f';//Se reenvía el ticket
                 
             }
-            
+          
             structRespuesta.precio = htonl((uint32_t) 0);
             
-            
             //Se registra la operación de entrada
-            fprintf(archivoBitacoraEntrada, "Entrada: %c. Identificador: %lu. Tiempo: %s\n",
-            								structRespuesta.accion,
-            								(unsigned long)identificador,
-            								tiempoString);
-            
-            
+            fprintf(archivoBitacoraEntrada, 
+				"Entrada: %c. Identificador: %lu. Tiempo: %s\n",
+                structRespuesta.accion,
+                (unsigned long)identificador,
+                tiempoString);
         } else if (accion == 's'){
-            
             //Si hay carros y el carro que va a salir está en el conjunto
             if ((numPuestosOcupados > 0) && 
-				(eliminarEnConj(&carros,identificador,&tiempoEstacionado)==true))
-			{
+                (eliminarEnConj(&carros,identificador,&tiempoEstacionado)==true))
+            {
                 numPuestosOcupados--;
                 structRespuesta.accion = 's';//Sí se puede ejecutar la acción
                 structRespuesta.precio = htonl(obtenerPrecio(tiempo - tiempoEstacionado));
                 //printf("PRECIO: %d\n", obtenerPrecio(tiempo-*tiempoEstacionado));
                 
-            //Se registra la operación de salida
-                fprintf(archivoBitacoraSalida, "Salida: %c. Identificador: %lu. Monto: Bs. %d.  Tiempo: %s\n",
-            								structRespuesta.accion,
-            								(unsigned long)identificador,
-            								obtenerPrecio(tiempo-tiempoEstacionado),
-            								tiempoString);
-                
+                //Se registra la operación de salida
+                fprintf(archivoBitacoraSalida, 
+					"Salida: %c. Identificador: %lu. Monto: Bs. %d.  Tiempo: %s\n",
+                    structRespuesta.accion,
+                    (unsigned long)identificador,
+                    obtenerPrecio(tiempo-tiempoEstacionado),
+                    tiempoString);
             }
             else{
                 structRespuesta.accion = 'v';//No se puede ejecutar la acción
                 
-                fprintf(archivoBitacoraSalida, "Ticket inválido con Identificador: %lu Recibido el %s\n",
-            								(unsigned long)identificador,
-            								tiempoString);
-                
+                fprintf(archivoBitacoraSalida, 
+					"Ticket inválido con Identificador: %lu Recibido el %s\n",
+                    (unsigned long)identificador,
+                     tiempoString);
             }
-            
-
-        
         }
-        
-        //printf("Puestos Ocupados: %d\n", numPuestosOcupados);
-        
-        
+ 
         //Se envía el mensaje de respuesta
-        ssize_t numBytesEnviados = sendto(socketSrvdrClt, 
-                                        &structRespuesta, 
-                                        (sizeof structRespuesta - sizeof structRespuesta.pad),
-                                        0,
-                                        (struct sockaddr *) &dirClnt, 
-                                        tamanoSocket);
-        
+        ssize_t numBytesEnviados = sendto(
+			socketSrvdrClt, 
+			structRespuesta,
+			(sizeof structRespuesta - sizeof structRespuesta.pad),
+			0,
+			(struct sockaddr *) &dirClnt,
+			tamanoSocket);
         
         if (numBytesEnviados < 0){
             fprintf(stderr,"Error al enviar respuesta: %s.\n", strerror(errno));
             exit(EXIT_FAILURE);
-        }
-        
-        //imprimirConj(carros);
-        
-        
+        }        
     }
     
     return 0;
